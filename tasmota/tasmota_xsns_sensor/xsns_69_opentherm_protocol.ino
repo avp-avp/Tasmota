@@ -539,7 +539,7 @@ unsigned long sns_opentherm_get_next_request(struct OT_BOILER_STATUS_T *boilerSt
     {
         struct OpenThermCommandT *cmd = &sns_opentherm_commands[sns_opentherm_current_command];
         // Return error if command known as not supported
-        if (!cmd->m_flags.notSupported)
+        if (!cmd->m_flags.notSupported && !cmd->m_flags.skip)
         {
             // Retrurn OT compatible request
             return cmd->m_ot_make_request(cmd, boilerStatus);
@@ -559,7 +559,7 @@ void sns_opentherm_check_retry_request()
 
     bool canRetry = ++cmd->m_flags.retryCount < 3;
     // In case of last retry and if this command never respond successfully, set notSupported flag
-    if (!canRetry && !cmd->m_flags.supported)
+    if (!cmd->m_flags.supported)
     {
         cmd->m_flags.notSupported = true;
         AddLog(LOG_LEVEL_ERROR,
