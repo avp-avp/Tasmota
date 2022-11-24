@@ -428,6 +428,14 @@ void ThermostatCtrState(uint8_t ctr_output)
       break;
     // Ramp-up controller (predictive)
     case CTR_RAMP_UP:
+      // If ramp-up off time counter has been initialized
+      // AND ramp-up off time counter value reached
+      if ((Thermostat[ctr_output].time_ctr_checkpoint != 0) &&
+          (TasmotaGlobal.uptime >= Thermostat[ctr_output].time_ctr_checkpoint)) {
+        // Reset times
+        Thermostat[ctr_output].time_ctr_checkpoint = 0;
+        Thermostat[ctr_output].timestamp_rampup_start = TasmotaGlobal.uptime;
+      }
       break;
 #ifdef USE_PI_AUTOTUNING
     // PI autotune
@@ -1236,7 +1244,7 @@ bool ThermostatTimerArm(uint8_t ctr_output, int16_t tempVal)
   bool result = false;
   // TempVal unit is tenths of degrees celsius
   if ((tempVal >= -1000)
-    && (tempVal <= 1000)
+    && (tempVal <= 2000)
     && (tempVal >= Thermostat[ctr_output].temp_frost_protect)) {
       Thermostat[ctr_output].temp_target_level = tempVal;
       Thermostat[ctr_output].status.thermostat_mode = THERMOSTAT_AUTOMATIC_OP;
@@ -1368,7 +1376,7 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
         value = ThermostatFahrenheitToCelsius(value, TEMP_CONV_ABSOLUTE);
       }
       if ( (value >= -1000)
-        && (value <= 1000)
+        && (value <= 2000)
         && (Thermostat[ctr_output].status.sensor_type == SENSOR_LOCAL)) {
         uint32_t timestamp = TasmotaGlobal.uptime;
         // Calculate temperature gradient if temperature value has changed
@@ -1440,7 +1448,7 @@ void CmndTempFrostProtectSet(void)
         value = (int16_t)(CharToFloat(XdrvMailbox.data) * 10);
       }
       if ( (value >= -1000)
-        && (value <= 1000)) {
+        && (value <= 2000)) {
         Thermostat[ctr_output].temp_frost_protect = value;
       }
     }
@@ -1571,7 +1579,7 @@ void CmndTempMeasuredSet(void)
         value = (int16_t)(CharToFloat(XdrvMailbox.data) * 10);
       }
       if ( (value >= -1000)
-        && (value <= 1000)
+        && (value <= 2000)
         && (Thermostat[ctr_output].status.sensor_type == SENSOR_MQTT)) {
         uint32_t timestamp = TasmotaGlobal.uptime;
         // Calculate temperature gradient if temperature value has changed
@@ -1609,7 +1617,7 @@ void CmndTempTargetSet(void)
         value = (int16_t)(CharToFloat(XdrvMailbox.data) * 10);
       }
       if ( (value >= -1000)
-        && (value <= 1000)
+        && (value <= 2000)
         && (value >= Thermostat[ctr_output].temp_frost_protect)) {
         Thermostat[ctr_output].temp_target_level = value;
       }
@@ -2061,7 +2069,7 @@ void ThermostatShow(uint8_t ctr_output, bool json)
     int16_t value = Thermostat[ctr_output].temp_measured_gradient;
     if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
       value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat[ctr_output].temp_measured_gradient, TEMP_CONV_RELATIVE);
-    } 
+    }
     f_temperature = value / 1000.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_GRADIENT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
     WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output) );
@@ -2084,7 +2092,7 @@ void ThermostatShow(uint8_t ctr_output, bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv39(uint8_t function)
+bool Xdrv39(uint32_t function)
 {
   bool result = false;
   uint8_t ctr_output;

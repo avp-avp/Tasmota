@@ -21,10 +21,6 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
-#ifdef USE_KNX
-bool knx_started = false;
-#endif  // USE_KNX
-
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
@@ -104,6 +100,11 @@ uint32_t ResetReason(void) {
     REASON_EXT_SYS_RST      = 6   // "External System"         external system reset
   */
   return ESP_ResetInfoReason();
+}
+
+bool ResetReasonPowerOn(void) {
+  uint32_t reset_reason = ESP_ResetInfoReason();
+  return ((reset_reason == REASON_DEFAULT_RST) || (reset_reason == REASON_EXT_SYS_RST));
 }
 
 String GetResetReason(void) {
@@ -382,7 +383,7 @@ char* Unescape(char* buffer, uint32_t* size)
   int32_t end_size = *size;
   uint8_t che = 0;
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: UnescapeIn %*_H"), *size, (uint8_t*)buffer);
 
   while (start_size > 0) {
     uint8_t ch = *read++;
@@ -426,7 +427,7 @@ char* Unescape(char* buffer, uint32_t* size)
   }
   *size = end_size;
   *write++ = 0;   // add the end string pointer reference
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: UnescapeOut %*_H"), *size, (uint8_t*)buffer);
 
   return buffer;
 }
@@ -441,6 +442,36 @@ char* RemoveSpace(char* p) {
     ch = *read++;
     if (!isspace(ch)) {
       *write++ = ch;
+    }
+  }
+  return p;
+}
+
+// remove spaces at the beginning and end of the string (but not in the middle)
+char* TrimSpace(char *p) {
+  // Remove white-space character (' ','\t','\n','\v','\f','\r')
+  char* write = p;
+  char* read = p;
+  char ch = '.';
+
+  // skip all leading spaces
+  while (isspace(*read)) {
+    read++;
+  }
+  // copy the rest
+  do {
+    ch = *read++;
+    *write++ = ch;
+  } while (ch != '\0');
+  // move to end
+  read = p + strlen(p);
+  // move backwards
+  while (p != read) {
+    read--;
+    if (isspace(*read)) {
+      *read = '\0';
+    } else {
+      break;
     }
   }
   return p;
@@ -518,6 +549,17 @@ char* UpperCase_P(char* dest, const char* source)
     *write++ = toupper(ch);
   }
   return dest;
+}
+
+char* SetStr(const char* str) {
+  if (nullptr == str) { str = PSTR(""); }       // nullptr is considered empty string
+  size_t str_len = strlen(str);
+  if (0 == str_len) { return EmptyStr; }        // return empty string
+
+  char* new_str = (char*) malloc(str_len + 1);
+  if (nullptr == new_str) { return EmptyStr; }  // return empty string
+  strlcpy(new_str, str, str_len + 1);
+  return new_str;
 }
 
 bool StrCaseStr_P(const char* source, const char* search) {
@@ -1437,7 +1479,7 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
     memcpy_P(&template8, &kModules8285[module_template - TMP_WEMOS], sizeof(template8));
   }
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&template8, sizeof(mytmplt8285));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: GetInternalTemplate %*_H"), sizeof(mytmplt8285), (uint8_t *)&template8);
 
   // template16  = GPIO 0,1,2,3,4,5,9,10,12,13,14,15,16,Adc,Flg
   uint16_t template16[(sizeof(mytmplt) / 2)] = { GPIO_NONE };
@@ -1458,8 +1500,7 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
   }
   memcpy(ptr, &template16[index], size);
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size / 2, 2);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d, %*_V"), option, size / 2, (uint8_t *)ptr);
 }
 #endif  // ESP8266
 
@@ -1486,7 +1527,7 @@ void TemplateGpios(myio *gp)
   }
   // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TemplateGpiosIn %*_H"), sizeof(mycfgio), (uint8_t *)&src);
 
   // Expand template to physical GPIO array, j=phy_GPIO, i=template_GPIO
   uint32_t j = 0;
@@ -1508,7 +1549,7 @@ void TemplateGpios(myio *gp)
   }
   // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TemplateGpiosOut %*_H"), sizeof(myio), (uint8_t *)gp);
 }
 
 gpio_flag ModuleFlag(void)
@@ -1715,16 +1756,14 @@ bool JsonTemplate(char* dataBuf)
     }
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Converted"));
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)&Settings->user_template, sizeof(Settings->user_template) / 2, 2);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Converted %*_V"), sizeof(Settings->user_template) / 2, (uint8_t*)&Settings->user_template);
 
   return true;
 }
 
 void TemplateJson(void)
 {
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Show"));
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)&Settings->user_template, sizeof(Settings->user_template) / 2, 2);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Show %*_V"), sizeof(Settings->user_template) / 2, (uint8_t*)&Settings->user_template);
 
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
@@ -1936,6 +1975,13 @@ void SetSerialBegin(void) {
 #endif  // ESP32
 }
 
+void SetSerialInitBegin(void) {
+  TasmotaGlobal.baudrate = Settings->baudrate * 300;
+  if ((GetSerialBaudrate() != TasmotaGlobal.baudrate) || (TS_SERIAL_8N1 != Settings->serial_config)) {
+    SetSerialBegin();
+  }
+}
+
 void SetSerialConfig(uint32_t serial_config) {
   if (serial_config > TS_SERIAL_8O2) {
     serial_config = TS_SERIAL_8N1;
@@ -1964,11 +2010,19 @@ void SetSerial(uint32_t baudrate, uint32_t serial_config) {
 }
 
 void ClaimSerial(void) {
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#ifdef USE_USB_CDC_CONSOLE
+  return;              // USB console does not use serial
+#endif  // USE_USB_CDC_CONSOLE
+#endif  // ESP32C3, S2 or S3
+#endif  // ESP32
   TasmotaGlobal.serial_local = true;
   AddLog(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
   TasmotaGlobal.baudrate = GetSerialBaudrate();
   Settings->baudrate = TasmotaGlobal.baudrate / 300;
+
 }
 
 void SerialSendRaw(char *codes)
@@ -2324,6 +2378,14 @@ void I2cScan(uint32_t bus) {
   // I2C_SCL_HELD_LOW_AFTER_READ 2 = I2C bus error. SCL held low beyond client clock stretch time
   // I2C_SDA_HELD_LOW            3 = I2C bus error. SDA line held low by client/another_master after n bits
   // I2C_SDA_HELD_LOW_AFTER_INIT 4 = line busy. SDA again held low by another device. 2nd master?
+  //                             5 = bus busy. Timeout
+  // https://www.arduino.cc/reference/en/language/functions/communication/wire/endtransmission/
+  // 0: success
+  // 1: data too long to fit in transmit buffer
+  // 2: received NACK on transmit of address
+  // 3: received NACK on transmit of data
+  // 4: other error
+  // 5: timeout
 
   uint8_t error = 0;
   uint8_t address = 0;
@@ -2415,7 +2477,12 @@ bool I2cSetDevice(uint32_t addr, uint32_t bus) {
     return false;       // If already active report as not present;
   }
   myWire.beginTransmission((uint8_t)addr);
-  return (0 == myWire.endTransmission());
+//  return (0 == myWire.endTransmission());
+  uint32_t err = myWire.endTransmission();
+  if (err && (err != 2)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Error %d at 0x%02x"), err, addr);
+  }
+  return (0 == err);
 }
 #endif  // USE_I2C
 
@@ -2683,35 +2750,18 @@ void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
   }
 }
 
-void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
-{
+void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count) {
   char hex_char[(count * 3) + 2];
   AddLog(loglevel, PSTR("DMP: %s"), ToHex_P(buffer, count, hex_char, sizeof(hex_char), ' '));
 }
 
-void AddLogSerial(uint32_t loglevel)
-{
-  AddLogBuffer(loglevel, (uint8_t*)TasmotaGlobal.serial_in_buffer, TasmotaGlobal.serial_in_byte_counter);
+void AddLogSerial() {
+  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)TasmotaGlobal.serial_in_buffer, TasmotaGlobal.serial_in_byte_counter);
 }
 
 void AddLogMissed(const char *sensor, uint32_t misses)
 {
   AddLog(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
-}
-
-void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32_t size) {
-  char log_data[4 + (count * size * 3)];
-
-  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
-  for (uint32_t i = 0; i < count; i++) {
-    if (1 == size) {  // uint8_t
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer));
-    } else {          // uint16_t
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X%02X"), log_data, *(buffer +1), *(buffer));
-    }
-    buffer += size;
-  }
-  AddLogData(loglevel, log_data);
 }
 
 void AddLogSpi(bool hardware, uint32_t clk, uint32_t mosi, uint32_t miso) {

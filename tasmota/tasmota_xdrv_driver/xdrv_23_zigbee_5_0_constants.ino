@@ -240,12 +240,16 @@ const char Z_strings[] PROGMEM =
   "BinaryRelinquishDefault" "\x00"
   "BinaryStatusFlags" "\x00"
   "BinaryValue" "\x00"
+  "BlockedGPDID" "\x00"
   "CIE" "\x00"
   "CO" "\x00"
   "CT" "\x00"
   "CalculationPeriod" "\x00"
+  "CcommissioningExitMode" "\x00"
   "CheckinInterval" "\x00"
   "CheckinIntervalMin" "\x00"
+  "ClientActiveFunctionality" "\x00"
+  "ClientFunctionality" "\x00"
   "ClosedLimit" "\x00"
   "Color" "\x00"
   "ColorCapabilities" "\x00"
@@ -265,6 +269,7 @@ const char Z_strings[] PROGMEM =
   "ColorPointRIntensity" "\x00"
   "ColorPointRX" "\x00"
   "ColorPointRY" "\x00"
+  "ColorStartUpColorTempireds" "\x00"
   "ColorStep" "\x00"
   "ColorTempMove" "\x00"
   "ColorTempMoveDown" "\x00"
@@ -275,20 +280,35 @@ const char Z_strings[] PROGMEM =
   "ColorTempStep" "\x00"
   "ColorTempStepDown" "\x00"
   "ColorTempStepUp" "\x00"
+  "CommissioningWindow" "\x00"
+  "CommunicationMode" "\x00"
   "CompanyName" "\x00"
   "CompensationText" "\x00"
   "ConfigStatus" "\x00"
   "Contact" "\x00"
   "ControlSequenceOfOperation" "\x00"
+  "ControlTemperature" "\x00"
   "Coordinate1" "\x00"
   "Coordinate2" "\x00"
   "Coordinate3" "\x00"
+  "CurrentBlock" "\x00"
+  "CurrentBlockPeriodConsumptionDelivered" "\x00"
   "CurrentGroup" "\x00"
+  "CurrentInletEnergyCarrierDemand" "\x00"
+  "CurrentInletEnergyCarrierSummation" "\x00"
+  "CurrentMaxDemandDelivered" "\x00"
+  "CurrentMaxDemandDeliveredTime" "\x00"
+  "CurrentMaxDemandReceived" "\x00"
+  "CurrentMaxDemandReceivedTime" "\x00"
+  "CurrentOutletEnergyCarrierDemand" "\x00"
+  "CurrentOutletEnergyCarrierSummation" "\x00"
   "CurrentPositionLift" "\x00"
   "CurrentPositionLiftPercentage" "\x00"
   "CurrentPositionTilt" "\x00"
   "CurrentPositionTiltPercentage" "\x00"
   "CurrentScene" "\x00"
+  "CurrentSummationDelivered" "\x00"
+  "CurrentSummationReceived" "\x00"
   "CurrentTemperature" "\x00"
   "CurrentTemperatureSetPoint" "\x00"
   "CurrentZoneSensitivityLevel" "\x00"
@@ -311,10 +331,14 @@ const char Z_strings[] PROGMEM =
   "DCVoltageMin" "\x00"
   "DCVoltageMultiplier" "\x00"
   "DCVoltageOverload" "\x00"
+  "DFTSummation" "\x00"
+  "DailyConsumptionTarget" "\x00"
+  "DailyFreezeTime" "\x00"
   "DataQualityID" "\x00"
   "DateCode" "\x00"
   "DecelerationTimeLift" "\x00"
   "DefaultMoveRate" "\x00"
+  "DefaultUpdatePeriod" "\x00"
   "DehumidificationCooling" "\x00"
   "DehumidificationHysteresis" "\x00"
   "DehumidificationLockout" "\x00"
@@ -322,10 +346,16 @@ const char Z_strings[] PROGMEM =
   "DeviceEnabled" "\x00"
   "DeviceTempAlarmMask" "\x00"
   "Dimmer" "\x00"
+  "DimmerCurrentFrequency" "\x00"
   "DimmerDown" "\x00"
+  "DimmerMaxFrequency" "\x00"
+  "DimmerMaxLevel" "\x00"
+  "DimmerMinFrequency" "\x00"
+  "DimmerMinLevel" "\x00"
   "DimmerMove" "\x00"
   "DimmerOptions" "\x00"
   "DimmerRemainingTime" "\x00"
+  "DimmerStartUpLevel" "\x00"
   "DimmerStep" "\x00"
   "DimmerStepDown" "\x00"
   "DimmerStepUp" "\x00"
@@ -342,7 +372,6 @@ const char Z_strings[] PROGMEM =
   "ElectricalMeasurementType" "\x00"
   "EnergyFormatting" "\x00"
   "EnergyRemote" "\x00"
-  "EnergyTotal" "\x00"
   "EnhancedColorMode" "\x00"
   "EnhancedCurrentHue" "\x00"
   "EurotronicErrors" "\x00"
@@ -351,11 +380,66 @@ const char Z_strings[] PROGMEM =
   "FanModeSequence" "\x00"
   "FastPollTimeout" "\x00"
   "FastPollTimeoutMax" "\x00"
+  "FastPollUpdatePeriod" "\x00"
   "Fire" "\x00"
   "FlowMaxMeasuredValue" "\x00"
   "FlowMinMeasuredValue" "\x00"
   "FlowRate" "\x00"
+  "FlowRestriction" "\x00"
   "FlowTolerance" "\x00"
+  "GPHueStop" "\x00"
+  "GPIdentify" "\x00"
+  "GPLevelStop" "\x00"
+  "GPLockDoor" "\x00"
+  "GPMoveColor" "\x00"
+  "GPMoveDown" "\x00"
+  "GPMoveDownOnOff" "\x00"
+  "GPMoveHueDown" "\x00"
+  "GPMoveHueUp" "\x00"
+  "GPMoveSatDown" "\x00"
+  "GPMoveSatUp" "\x00"
+  "GPMoveUp" "\x00"
+  "GPMoveUpOnOff" "\x00"
+  "GPOff" "\x00"
+  "GPOn" "\x00"
+  "GPPress1of1" "\x00"
+  "GPPress1of2" "\x00"
+  "GPPress2of2" "\x00"
+  "GPRelease" "\x00"
+  "GPRelease1of1" "\x00"
+  "GPRelease1of2" "\x00"
+  "GPRelease2of2" "\x00"
+  "GPSatStop" "\x00"
+  "GPScene0" "\x00"
+  "GPScene1" "\x00"
+  "GPScene10" "\x00"
+  "GPScene11" "\x00"
+  "GPScene12" "\x00"
+  "GPScene13" "\x00"
+  "GPScene14" "\x00"
+  "GPScene15" "\x00"
+  "GPScene2" "\x00"
+  "GPScene3" "\x00"
+  "GPScene4" "\x00"
+  "GPScene5" "\x00"
+  "GPScene6" "\x00"
+  "GPScene7" "\x00"
+  "GPScene8" "\x00"
+  "GPScene9" "\x00"
+  "GPShortPress1of1" "\x00"
+  "GPShortPress1of2" "\x00"
+  "GPShortPress2of2" "\x00"
+  "GPStepColor" "\x00"
+  "GPStepDown" "\x00"
+  "GPStepDownOnOff" "\x00"
+  "GPStepHueDown" "\x00"
+  "GPStepHueUp" "\x00"
+  "GPStepSatDown" "\x00"
+  "GPStepSatUp" "\x00"
+  "GPStepUp" "\x00"
+  "GPStepUpOnOff" "\x00"
+  "GPToggle" "\x00"
+  "GPUnlockDoor" "\x00"
   "GenericDeviceClass" "\x00"
   "GenericDeviceType" "\x00"
   "GetAllGroups" "\x00"
@@ -389,12 +473,14 @@ const char Z_strings[] PROGMEM =
   "IlluminanceMinMeasuredValue" "\x00"
   "IlluminanceTargetLevel" "\x00"
   "IlluminanceTolerance" "\x00"
+  "InletTemperature" "\x00"
   "InstalledClosedLimitLift" "\x00"
   "InstalledClosedLimitTilt" "\x00"
   "InstalledOpenLimitLift" "\x00"
   "InstalledOpenLimitTilt" "\x00"
   "IntermediateSetpointsLift" "\x00"
   "IntermediateSetpointsTilt" "\x00"
+  "IntervalReadReportingPeriod" "\x00"
   "IntrinsicBallastFactor" "\x00"
   "LampAlarmMode" "\x00"
   "LampBurnHours" "\x00"
@@ -415,6 +501,7 @@ const char Z_strings[] PROGMEM =
   "LineCurrent" "\x00"
   "LineCurrentPhB" "\x00"
   "LineCurrentPhC" "\x00"
+  "LinkKey" "\x00"
   "LocalTemperature" "\x00"
   "LocalTemperatureCalibration" "\x00"
   "LocalTime" "\x00"
@@ -458,7 +545,10 @@ const char Z_strings[] PROGMEM =
   "MaxCoolSetpointLimit" "\x00"
   "MaxHeatSetpointLimit" "\x00"
   "MaxPINCodeLength" "\x00"
+  "MaxProxyTableEntries" "\x00"
   "MaxRFIDCodeLength" "\x00"
+  "MaxSearchCounter" "\x00"
+  "MaxSinkTableEntries" "\x00"
   "MaxTempExperienced" "\x00"
   "Measured11thHarmonicCurrent" "\x00"
   "Measured1stHarmonicCurrent" "\x00"
@@ -510,6 +600,8 @@ const char Z_strings[] PROGMEM =
   "MultiValue" "\x00"
   "MultipleScheduling" "\x00"
   "NeutralCurrent" "\x00"
+  "NotificationRetryNumber" "\x00"
+  "NotificationRetryTimer" "\x00"
   "NumberOfDevices" "\x00"
   "NumberOfHolidaySchedulesSupported" "\x00"
   "NumberOfLogRecordsSupported" "\x00"
@@ -538,6 +630,7 @@ const char Z_strings[] PROGMEM =
   "OpenPeriod" "\x00"
   "OppleMode" "\x00"
   "OutdoorTemperature" "\x00"
+  "OutletTemperature" "\x00"
   "OverTempTotalDwell" "\x00"
   "PICoolingDemand" "\x00"
   "PIHeatingDemand" "\x00"
@@ -566,6 +659,7 @@ const char Z_strings[] PROGMEM =
   "PowerOnTimer" "\x00"
   "PowerSource" "\x00"
   "PowerThreshold" "\x00"
+  "PresetReadingTime" "\x00"
   "Pressure" "\x00"
   "PressureMaxMeasuredValue" "\x00"
   "PressureMaxScaledValue" "\x00"
@@ -575,6 +669,7 @@ const char Z_strings[] PROGMEM =
   "PressureScaledTolerance" "\x00"
   "PressureScaledValue" "\x00"
   "PressureTolerance" "\x00"
+  "PreviousBlockPeriodConsumptionDelivered" "\x00"
   "Primary1Intensity" "\x00"
   "Primary1X" "\x00"
   "Primary1Y" "\x00"
@@ -596,6 +691,8 @@ const char Z_strings[] PROGMEM =
   "ProductCode" "\x00"
   "ProductRevision" "\x00"
   "ProductURL" "\x00"
+  "ProfileIntervalPeriod" "\x00"
+  "ProxyTable" "\x00"
   "QualityMeasure" "\x00"
   "RGB" "\x00"
   "RHDehumidificationSetpoint" "\x00"
@@ -639,6 +736,7 @@ const char Z_strings[] PROGMEM =
   "ReactivePower" "\x00"
   "ReactivePowerPhB" "\x00"
   "ReactivePowerPhC" "\x00"
+  "ReadingSnapShotTime" "\x00"
   "RecallScene" "\x00"
   "RelativeHumidity" "\x00"
   "RelativeHumidityDisplay" "\x00"
@@ -661,6 +759,11 @@ const char Z_strings[] PROGMEM =
   "SceneValid" "\x00"
   "ScheduleMode" "\x00"
   "SeaPressure" "\x00"
+  "SecurityLevel" "\x00"
+  "ServerActiveFunctionality" "\x00"
+  "ServerFunctionality" "\x00"
+  "SharedSecurityKey" "\x00"
+  "SharedSecurityKeyType" "\x00"
   "ShortPollInterval" "\x00"
   "Shutter" "\x00"
   "ShutterClose" "\x00"
@@ -668,12 +771,14 @@ const char Z_strings[] PROGMEM =
   "ShutterOpen" "\x00"
   "ShutterStop" "\x00"
   "ShutterTilt" "\x00"
+  "SinkTable" "\x00"
   "SoftwareRevision" "\x00"
   "StackVersion" "\x00"
   "StandardTime" "\x00"
   "StartUpOnOff" "\x00"
   "Status" "\x00"
   "StoreScene" "\x00"
+  "SupplyStatus" "\x00"
   "SwitchActions" "\x00"
   "SwitchType" "\x00"
   "SystemMode" "\x00"
@@ -718,6 +823,7 @@ const char Z_strings[] PROGMEM =
   "VelocityLift" "\x00"
   "ViewGroup" "\x00"
   "ViewScene" "\x00"
+  "VolumePerReport" "\x00"
   "Water" "\x00"
   "WhitePointX" "\x00"
   "WhitePointY" "\x00"
@@ -921,519 +1027,625 @@ enum Z_offsets {
   Zo_BinaryRelinquishDefault = 3108,
   Zo_BinaryStatusFlags = 3132,
   Zo_BinaryValue = 3150,
-  Zo_CIE = 3162,
-  Zo_CO = 3166,
-  Zo_CT = 3169,
-  Zo_CalculationPeriod = 3172,
-  Zo_CheckinInterval = 3190,
-  Zo_CheckinIntervalMin = 3206,
-  Zo_ClosedLimit = 3225,
-  Zo_Color = 3237,
-  Zo_ColorCapabilities = 3243,
-  Zo_ColorLoopActive = 3261,
-  Zo_ColorLoopDirection = 3277,
-  Zo_ColorLoopStartEnhancedHue = 3296,
-  Zo_ColorLoopStoredEnhancedHue = 3322,
-  Zo_ColorLoopTime = 3349,
-  Zo_ColorMode = 3363,
-  Zo_ColorMove = 3373,
-  Zo_ColorPointBIntensity = 3383,
-  Zo_ColorPointBX = 3404,
-  Zo_ColorPointBY = 3417,
-  Zo_ColorPointGIntensity = 3430,
-  Zo_ColorPointGX = 3451,
-  Zo_ColorPointGY = 3464,
-  Zo_ColorPointRIntensity = 3477,
-  Zo_ColorPointRX = 3498,
-  Zo_ColorPointRY = 3511,
-  Zo_ColorStep = 3524,
-  Zo_ColorTempMove = 3534,
-  Zo_ColorTempMoveDown = 3548,
-  Zo_ColorTempMoveStop = 3566,
-  Zo_ColorTempMoveUp = 3584,
-  Zo_ColorTempPhysicalMaxMireds = 3600,
-  Zo_ColorTempPhysicalMinMireds = 3627,
-  Zo_ColorTempStep = 3654,
-  Zo_ColorTempStepDown = 3668,
-  Zo_ColorTempStepUp = 3686,
-  Zo_CompanyName = 3702,
-  Zo_CompensationText = 3714,
-  Zo_ConfigStatus = 3731,
-  Zo_Contact = 3744,
-  Zo_ControlSequenceOfOperation = 3752,
-  Zo_Coordinate1 = 3779,
-  Zo_Coordinate2 = 3791,
-  Zo_Coordinate3 = 3803,
-  Zo_CurrentGroup = 3815,
-  Zo_CurrentPositionLift = 3828,
-  Zo_CurrentPositionLiftPercentage = 3848,
-  Zo_CurrentPositionTilt = 3878,
-  Zo_CurrentPositionTiltPercentage = 3898,
-  Zo_CurrentScene = 3928,
-  Zo_CurrentTemperature = 3941,
-  Zo_CurrentTemperatureSetPoint = 3960,
-  Zo_CurrentZoneSensitivityLevel = 3987,
-  Zo_CustomerName = 4015,
-  Zo_DCCurrent = 4028,
-  Zo_DCCurrentDivisor = 4038,
-  Zo_DCCurrentMax = 4055,
-  Zo_DCCurrentMin = 4068,
-  Zo_DCCurrentMultiplier = 4081,
-  Zo_DCCurrentOverload = 4101,
-  Zo_DCOverloadAlarmsMask = 4119,
-  Zo_DCPower = 4140,
-  Zo_DCPowerDivisor = 4148,
-  Zo_DCPowerMax = 4163,
-  Zo_DCPowerMin = 4174,
-  Zo_DCPowerMultiplier = 4185,
-  Zo_DCVoltage = 4203,
-  Zo_DCVoltageDivisor = 4213,
-  Zo_DCVoltageMax = 4230,
-  Zo_DCVoltageMin = 4243,
-  Zo_DCVoltageMultiplier = 4256,
-  Zo_DCVoltageOverload = 4276,
-  Zo_DataQualityID = 4294,
-  Zo_DateCode = 4308,
-  Zo_DecelerationTimeLift = 4317,
-  Zo_DefaultMoveRate = 4338,
-  Zo_DehumidificationCooling = 4354,
-  Zo_DehumidificationHysteresis = 4378,
-  Zo_DehumidificationLockout = 4405,
-  Zo_DehumidificationMaxCool = 4429,
-  Zo_DeviceEnabled = 4453,
-  Zo_DeviceTempAlarmMask = 4467,
-  Zo_Dimmer = 4487,
-  Zo_DimmerDown = 4494,
-  Zo_DimmerMove = 4505,
-  Zo_DimmerOptions = 4516,
-  Zo_DimmerRemainingTime = 4530,
-  Zo_DimmerStep = 4550,
-  Zo_DimmerStepDown = 4561,
-  Zo_DimmerStepUp = 4576,
-  Zo_DimmerStop = 4589,
-  Zo_DimmerUp = 4600,
-  Zo_DisableLocalConfig = 4609,
-  Zo_DoorClosedEvents = 4628,
-  Zo_DoorOpenEvents = 4645,
-  Zo_DoorState = 4660,
-  Zo_DriftCompensation = 4670,
-  Zo_DstEnd = 4688,
-  Zo_DstShift = 4695,
-  Zo_DstStart = 4704,
-  Zo_ElectricalMeasurementType = 4713,
-  Zo_EnergyFormatting = 4739,
-  Zo_EnergyRemote = 4756,
-  Zo_EnergyTotal = 4769,
-  Zo_EnhancedColorMode = 4781,
-  Zo_EnhancedCurrentHue = 4799,
-  Zo_EurotronicErrors = 4818,
-  Zo_EurotronicHostFlags = 4835,
-  Zo_FanMode = 4855,
-  Zo_FanModeSequence = 4863,
-  Zo_FastPollTimeout = 4879,
-  Zo_FastPollTimeoutMax = 4895,
-  Zo_Fire = 4914,
-  Zo_FlowMaxMeasuredValue = 4919,
-  Zo_FlowMinMeasuredValue = 4940,
-  Zo_FlowRate = 4961,
-  Zo_FlowTolerance = 4970,
-  Zo_GenericDeviceClass = 4984,
-  Zo_GenericDeviceType = 5003,
-  Zo_GetAllGroups = 5021,
-  Zo_GetGroup = 5034,
-  Zo_GetSceneMembership = 5043,
-  Zo_GlassBreak = 5062,
-  Zo_GroupNameSupport = 5073,
-  Zo_HVACSystemTypeConfiguration = 5090,
-  Zo_HWVersion = 5118,
-  Zo_HarmonicCurrentMultiplier = 5128,
-  Zo_HighTempDwellTripPoint = 5154,
-  Zo_HighTempThreshold = 5177,
-  Zo_Hue = 5195,
-  Zo_HueMove = 5199,
-  Zo_HueSat = 5207,
-  Zo_HueStep = 5214,
-  Zo_HueStepDown = 5222,
-  Zo_HueStepUp = 5234,
-  Zo_Humidity = 5244,
-  Zo_HumidityMaxMeasuredValue = 5253,
-  Zo_HumidityMinMeasuredValue = 5278,
-  Zo_HumidityTolerance = 5303,
-  Zo_IASCIEAddress = 5321,
-  Zo_Identify = 5335,
-  Zo_IdentifyQuery = 5344,
-  Zo_IdentifyTime = 5358,
-  Zo_Illuminance = 5371,
-  Zo_IlluminanceLevelStatus = 5383,
-  Zo_IlluminanceLightSensorType = 5406,
-  Zo_IlluminanceMaxMeasuredValue = 5433,
-  Zo_IlluminanceMinMeasuredValue = 5461,
-  Zo_IlluminanceTargetLevel = 5489,
-  Zo_IlluminanceTolerance = 5512,
-  Zo_InstalledClosedLimitLift = 5533,
-  Zo_InstalledClosedLimitTilt = 5558,
-  Zo_InstalledOpenLimitLift = 5583,
-  Zo_InstalledOpenLimitTilt = 5606,
-  Zo_IntermediateSetpointsLift = 5629,
-  Zo_IntermediateSetpointsTilt = 5655,
-  Zo_IntrinsicBallastFactor = 5681,
-  Zo_LampAlarmMode = 5704,
-  Zo_LampBurnHours = 5718,
-  Zo_LampBurnHoursTripPoint = 5732,
-  Zo_LampManufacturer = 5755,
-  Zo_LampRatedHours = 5772,
-  Zo_LampType = 5787,
-  Zo_LastConfiguredBy = 5796,
-  Zo_LastMessageLQI = 5813,
-  Zo_LastMessageRSSI = 5828,
-  Zo_LastSetTime = 5844,
-  Zo_LegrandHeatingMode = 5856,
-  Zo_LegrandMode = 5875,
-  Zo_LegrandOpt1 = 5887,
-  Zo_LegrandOpt2 = 5899,
-  Zo_LegrandOpt3 = 5911,
-  Zo_LidlPower = 5923,
-  Zo_LineCurrent = 5933,
-  Zo_LineCurrentPhB = 5945,
-  Zo_LineCurrentPhC = 5960,
-  Zo_LocalTemperature = 5975,
-  Zo_LocalTemperatureCalibration = 5992,
-  Zo_LocalTime = 6020,
-  Zo_LocationAge = 6030,
-  Zo_LocationDescription = 6042,
-  Zo_LocationMethod = 6062,
-  Zo_LocationPower = 6077,
-  Zo_LocationType = 6091,
-  Zo_LockAlarmMask = 6104,
-  Zo_LockDefaultConfigurationRegister = 6118,
-  Zo_LockEnableInsideStatusLED = 6151,
-  Zo_LockEnableLocalProgramming = 6177,
-  Zo_LockEnableLogging = 6204,
-  Zo_LockEnableOneTouchLocking = 6222,
-  Zo_LockEnablePrivacyModeButton = 6248,
-  Zo_LockKeypadOperationEventMask = 6276,
-  Zo_LockKeypadProgrammingEventMask = 6305,
-  Zo_LockLEDSettings = 6336,
-  Zo_LockLanguage = 6352,
-  Zo_LockManualOperationEventMask = 6365,
-  Zo_LockOperatingMode = 6394,
-  Zo_LockRFIDOperationEventMask = 6412,
-  Zo_LockRFIDProgrammingEventMask = 6439,
-  Zo_LockRFOperationEventMask = 6468,
-  Zo_LockRFProgrammingEventMask = 6493,
-  Zo_LockSoundVolume = 6520,
-  Zo_LockState = 6536,
-  Zo_LockSupportedOperatingModes = 6546,
-  Zo_LockType = 6574,
-  Zo_LongPollInterval = 6583,
-  Zo_LongPollIntervalMin = 6600,
-  Zo_LowTempDwellTripPoint = 6620,
-  Zo_LowTempThreshold = 6642,
-  Zo_MainsAlarmMask = 6659,
-  Zo_MainsFrequency = 6674,
-  Zo_MainsVoltage = 6689,
-  Zo_MainsVoltageDwellTripPoint = 6702,
-  Zo_MainsVoltageMaxThreshold = 6729,
-  Zo_MainsVoltageMinThreshold = 6754,
-  Zo_Manufacturer = 6779,
-  Zo_MaxCoolSetpointLimit = 6792,
-  Zo_MaxHeatSetpointLimit = 6813,
-  Zo_MaxPINCodeLength = 6834,
-  Zo_MaxRFIDCodeLength = 6851,
-  Zo_MaxTempExperienced = 6869,
-  Zo_Measured11thHarmonicCurrent = 6888,
-  Zo_Measured1stHarmonicCurrent = 6916,
-  Zo_Measured3rdHarmonicCurrent = 6943,
-  Zo_Measured5thHarmonicCurrent = 6970,
-  Zo_Measured7thHarmonicCurrent = 6997,
-  Zo_Measured9thHarmonicCurrent = 7024,
-  Zo_MeasuredPhase11thHarmonicCurrent = 7051,
-  Zo_MeasuredPhase1stHarmonicCurrent = 7084,
-  Zo_MeasuredPhase3rdHarmonicCurrent = 7116,
-  Zo_MeasuredPhase5thHarmonicCurrent = 7148,
-  Zo_MeasuredPhase7thHarmonicCurrent = 7180,
-  Zo_MeasuredPhase9thHarmonicCurrent = 7212,
-  Zo_MeterTypeID = 7244,
-  Zo_MinCoolSetpointLimit = 7256,
-  Zo_MinHeatSetpointLimit = 7277,
-  Zo_MinPINCodeLength = 7298,
-  Zo_MinRFIDCodeLength = 7315,
-  Zo_MinSetpointDeadBand = 7333,
-  Zo_MinTempExperienced = 7353,
-  Zo_Mode = 7372,
-  Zo_Model = 7377,
-  Zo_ModelId = 7383,
-  Zo_MotorStepSize = 7391,
-  Zo_Movement = 7405,
-  Zo_MullerLightMode = 7414,
-  Zo_MultiApplicationType = 7430,
-  Zo_MultiDescription = 7451,
-  Zo_MultiInApplicationType = 7468,
-  Zo_MultiInDescription = 7491,
-  Zo_MultiInNumberOfStates = 7510,
-  Zo_MultiInOutOfService = 7532,
-  Zo_MultiInReliability = 7552,
-  Zo_MultiInStatusFlags = 7571,
-  Zo_MultiInValue = 7590,
-  Zo_MultiNumberOfStates = 7603,
-  Zo_MultiOutApplicationType = 7623,
-  Zo_MultiOutDescription = 7647,
-  Zo_MultiOutNumberOfStates = 7667,
-  Zo_MultiOutOfService = 7690,
-  Zo_MultiOutOutOfService = 7708,
-  Zo_MultiOutReliability = 7729,
-  Zo_MultiOutRelinquishDefault = 7749,
-  Zo_MultiOutStatusFlags = 7775,
-  Zo_MultiOutValue = 7795,
-  Zo_MultiReliability = 7809,
-  Zo_MultiRelinquishDefault = 7826,
-  Zo_MultiStatusFlags = 7849,
-  Zo_MultiValue = 7866,
-  Zo_MultipleScheduling = 7877,
-  Zo_NeutralCurrent = 7896,
-  Zo_NumberOfDevices = 7911,
-  Zo_NumberOfHolidaySchedulesSupported = 7927,
-  Zo_NumberOfLogRecordsSupported = 7961,
-  Zo_NumberOfPINUsersSupported = 7989,
-  Zo_NumberOfPrimaries = 8015,
-  Zo_NumberOfRFIDUsersSupported = 8033,
-  Zo_NumberOfResets = 8060,
-  Zo_NumberOfTotalUsersSupported = 8075,
-  Zo_NumberOfWeekDaySchedulesSupportedPerUser = 8103,
-  Zo_NumberOfYearDaySchedulesSupportedPerUser = 8144,
-  Zo_NumberOfZoneSensitivityLevelsSupported = 8185,
-  Zo_NumberRSSIMeasurements = 8224,
-  Zo_NumberofActuationsLift = 8247,
-  Zo_NumberofActuationsTilt = 8270,
-  Zo_Occupancy = 8293,
-  Zo_OccupancySensorType = 8303,
-  Zo_OccupiedCoolingSetpoint = 8323,
-  Zo_OccupiedHeatingSetpoint = 8347,
-  Zo_OffTransitionTime = 8371,
-  Zo_OffWaitTime = 8389,
-  Zo_OnLevel = 8401,
-  Zo_OnOff = 8409,
-  Zo_OnOffTransitionTime = 8415,
-  Zo_OnTime = 8435,
-  Zo_OnTransitionTime = 8442,
-  Zo_OpenPeriod = 8459,
-  Zo_OppleMode = 8470,
-  Zo_OutdoorTemperature = 8480,
-  Zo_OverTempTotalDwell = 8499,
-  Zo_PICoolingDemand = 8518,
-  Zo_PIHeatingDemand = 8534,
-  Zo_PIROccupiedToUnoccupiedDelay = 8550,
-  Zo_PIRUnoccupiedToOccupiedDelay = 8579,
-  Zo_PIRUnoccupiedToOccupiedThreshold = 8608,
-  Zo_POD = 8641,
-  Zo_Panic = 8645,
-  Zo_PartNumber = 8651,
-  Zo_PathLossExponent = 8662,
-  Zo_PersistentMemoryWrites = 8679,
-  Zo_PersonalAlarm = 8702,
-  Zo_PhaseHarmonicCurrentMultiplier = 8716,
-  Zo_PhysicalClosedLimit = 8747,
-  Zo_PhysicalClosedLimitLift = 8767,
-  Zo_PhysicalClosedLimitTilt = 8791,
-  Zo_PhysicalEnvironment = 8815,
-  Zo_Power = 8835,
-  Zo_PowerDivisor = 8841,
-  Zo_PowerFactor = 8854,
-  Zo_PowerFactorPhB = 8866,
-  Zo_PowerFactorPhC = 8881,
-  Zo_PowerMultiplier = 8896,
-  Zo_PowerOffEffect = 8912,
-  Zo_PowerOnRecall = 8927,
-  Zo_PowerOnTimer = 8941,
-  Zo_PowerSource = 8954,
-  Zo_PowerThreshold = 8966,
-  Zo_Pressure = 8981,
-  Zo_PressureMaxMeasuredValue = 8990,
-  Zo_PressureMaxScaledValue = 9015,
-  Zo_PressureMinMeasuredValue = 9038,
-  Zo_PressureMinScaledValue = 9063,
-  Zo_PressureScale = 9086,
-  Zo_PressureScaledTolerance = 9100,
-  Zo_PressureScaledValue = 9124,
-  Zo_PressureTolerance = 9144,
-  Zo_Primary1Intensity = 9162,
-  Zo_Primary1X = 9180,
-  Zo_Primary1Y = 9190,
-  Zo_Primary2Intensity = 9200,
-  Zo_Primary2X = 9218,
-  Zo_Primary2Y = 9228,
-  Zo_Primary3Intensity = 9238,
-  Zo_Primary3X = 9256,
-  Zo_Primary3Y = 9266,
-  Zo_Primary4Intensity = 9276,
-  Zo_Primary4X = 9294,
-  Zo_Primary4Y = 9304,
-  Zo_Primary5Intensity = 9314,
-  Zo_Primary5X = 9332,
-  Zo_Primary5Y = 9342,
-  Zo_Primary6Intensity = 9352,
-  Zo_Primary6X = 9370,
-  Zo_Primary6Y = 9380,
-  Zo_ProductCode = 9390,
-  Zo_ProductRevision = 9402,
-  Zo_ProductURL = 9418,
-  Zo_QualityMeasure = 9429,
-  Zo_RGB = 9444,
-  Zo_RHDehumidificationSetpoint = 9448,
-  Zo_RMSCurrent = 9475,
-  Zo_RMSCurrentMax = 9486,
-  Zo_RMSCurrentMaxPhB = 9500,
-  Zo_RMSCurrentMaxPhC = 9517,
-  Zo_RMSCurrentMin = 9534,
-  Zo_RMSCurrentMinPhB = 9548,
-  Zo_RMSCurrentMinPhC = 9565,
-  Zo_RMSCurrentPhB = 9582,
-  Zo_RMSCurrentPhC = 9596,
-  Zo_RMSExtremeOverVoltage = 9610,
-  Zo_RMSExtremeOverVoltagePeriod = 9632,
-  Zo_RMSExtremeOverVoltagePeriodPhB = 9660,
-  Zo_RMSExtremeOverVoltagePeriodPhC = 9691,
-  Zo_RMSExtremeUnderVoltage = 9722,
-  Zo_RMSExtremeUnderVoltagePeriod = 9745,
-  Zo_RMSExtremeUnderVoltagePeriodPhB = 9774,
-  Zo_RMSExtremeUnderVoltagePeriodPhC = 9806,
-  Zo_RMSVoltage = 9838,
-  Zo_RMSVoltageMax = 9849,
-  Zo_RMSVoltageMaxPhB = 9863,
-  Zo_RMSVoltageMaxPhC = 9880,
-  Zo_RMSVoltageMin = 9897,
-  Zo_RMSVoltageMinPhB = 9911,
-  Zo_RMSVoltageMinPhC = 9928,
-  Zo_RMSVoltagePhB = 9945,
-  Zo_RMSVoltagePhC = 9959,
-  Zo_RMSVoltageSag = 9973,
-  Zo_RMSVoltageSagPeriod = 9987,
-  Zo_RMSVoltageSagPeriodPhB = 10007,
-  Zo_RMSVoltageSagPeriodPhC = 10030,
-  Zo_RMSVoltageSwell = 10053,
-  Zo_RMSVoltageSwellPeriod = 10069,
-  Zo_RMSVoltageSwellPeriodPhB = 10091,
-  Zo_RMSVoltageSwellPeriodPhC = 10116,
-  Zo_ReactiveCurrent = 10141,
-  Zo_ReactiveCurrentPhB = 10157,
-  Zo_ReactiveCurrentPhC = 10176,
-  Zo_ReactivePower = 10195,
-  Zo_ReactivePowerPhB = 10209,
-  Zo_ReactivePowerPhC = 10226,
-  Zo_RecallScene = 10243,
-  Zo_RelativeHumidity = 10255,
-  Zo_RelativeHumidityDisplay = 10272,
-  Zo_RelativeHumidityMode = 10296,
-  Zo_RemainingTime = 10317,
-  Zo_RemoteSensing = 10331,
-  Zo_RemoveAllGroups = 10345,
-  Zo_RemoveAllScenes = 10361,
-  Zo_RemoveGroup = 10377,
-  Zo_RemoveScene = 10389,
-  Zo_ReportingPeriod = 10401,
-  Zo_ResetAlarm = 10417,
-  Zo_ResetAllAlarms = 10428,
-  Zo_SWBuildID = 10443,
-  Zo_Sat = 10453,
-  Zo_SatMove = 10457,
-  Zo_SatStep = 10465,
-  Zo_SceneCount = 10473,
-  Zo_SceneNameSupport = 10484,
-  Zo_SceneValid = 10501,
-  Zo_ScheduleMode = 10512,
-  Zo_SeaPressure = 10525,
-  Zo_ShortPollInterval = 10537,
-  Zo_Shutter = 10555,
-  Zo_ShutterClose = 10563,
-  Zo_ShutterLift = 10576,
-  Zo_ShutterOpen = 10588,
-  Zo_ShutterStop = 10600,
-  Zo_ShutterTilt = 10612,
-  Zo_SoftwareRevision = 10624,
-  Zo_StackVersion = 10641,
-  Zo_StandardTime = 10654,
-  Zo_StartUpOnOff = 10667,
-  Zo_Status = 10680,
-  Zo_StoreScene = 10687,
-  Zo_SwitchActions = 10698,
-  Zo_SwitchType = 10712,
-  Zo_SystemMode = 10723,
-  Zo_TRVBoost = 10734,
-  Zo_TRVChildProtection = 10743,
-  Zo_TRVMirrorDisplay = 10762,
-  Zo_TRVMode = 10779,
-  Zo_TRVWindowOpen = 10787,
-  Zo_TempTarget = 10801,
-  Zo_Temperature = 10812,
-  Zo_TemperatureDisplayMode = 10824,
-  Zo_TemperatureMaxMeasuredValue = 10847,
-  Zo_TemperatureMinMeasuredValue = 10875,
-  Zo_TemperatureTolerance = 10903,
-  Zo_TerncyDuration = 10924,
-  Zo_TerncyRotate = 10939,
-  Zo_ThSetpoint = 10952,
-  Zo_ThermostatAlarmMask = 10963,
-  Zo_ThermostatKeypadLockout = 10983,
-  Zo_ThermostatOccupancy = 11007,
-  Zo_ThermostatRunningMode = 11027,
-  Zo_ThermostatScheduleProgrammingVisibility = 11049,
-  Zo_Time = 11089,
-  Zo_TimeEpoch = 11094,
-  Zo_TimeStatus = 11104,
-  Zo_TimeZone = 11115,
-  Zo_TotalActivePower = 11124,
-  Zo_TotalApparentPower = 11141,
-  Zo_TotalProfileNum = 11160,
-  Zo_TotalReactivePower = 11176,
-  Zo_TuyaCalibration = 11195,
-  Zo_TuyaCalibrationTime = 11211,
-  Zo_TuyaMCUVersion = 11231,
-  Zo_TuyaMotorReversal = 11246,
-  Zo_TuyaMovingState = 11264,
-  Zo_TuyaQuery = 11280,
-  Zo_UnoccupiedCoolingSetpoint = 11290,
-  Zo_UnoccupiedHeatingSetpoint = 11316,
-  Zo_UtilityName = 11342,
-  Zo_ValidUntilTime = 11354,
-  Zo_ValvePosition = 11369,
-  Zo_VelocityLift = 11383,
-  Zo_ViewGroup = 11396,
-  Zo_ViewScene = 11406,
-  Zo_Water = 11416,
-  Zo_WhitePointX = 11422,
-  Zo_WhitePointY = 11434,
-  Zo_WindowCoveringType = 11446,
-  Zo_X = 11465,
-  Zo_Y = 11467,
-  Zo_ZCLVersion = 11469,
-  Zo_ZoneID = 11480,
-  Zo_ZoneState = 11487,
-  Zo_ZoneStatus = 11497,
-  Zo_ZoneStatusChange = 11508,
-  Zo_ZoneType = 11525,
-  Zo__ = 11534,
-  Zo_xx = 11536,
-  Zo_xx000A00 = 11539,
-  Zo_xx0A = 11548,
-  Zo_xx0A00 = 11553,
-  Zo_xx19 = 11560,
-  Zo_xx190A = 11565,
-  Zo_xx190A00 = 11572,
-  Zo_xxxx = 11581,
-  Zo_xxxx00 = 11586,
-  Zo_xxxx0A00 = 11593,
-  Zo_xxxxyy = 11602,
-  Zo_xxxxyyyy = 11609,
-  Zo_xxxxyyyy0A00 = 11618,
-  Zo_xxxxyyzz = 11631,
-  Zo_xxyy = 11640,
-  Zo_xxyy0A00 = 11645,
-  Zo_xxyyyy = 11654,
-  Zo_xxyyyy000000000000 = 11661,
-  Zo_xxyyyy0A0000000000 = 11680,
-  Zo_xxyyyyzz = 11699,
-  Zo_xxyyyyzzzz = 11708,
-  Zo_xxyyzzzz = 11719,
+  Zo_BlockedGPDID = 3162,
+  Zo_CIE = 3175,
+  Zo_CO = 3179,
+  Zo_CT = 3182,
+  Zo_CalculationPeriod = 3185,
+  Zo_CcommissioningExitMode = 3203,
+  Zo_CheckinInterval = 3226,
+  Zo_CheckinIntervalMin = 3242,
+  Zo_ClientActiveFunctionality = 3261,
+  Zo_ClientFunctionality = 3287,
+  Zo_ClosedLimit = 3307,
+  Zo_Color = 3319,
+  Zo_ColorCapabilities = 3325,
+  Zo_ColorLoopActive = 3343,
+  Zo_ColorLoopDirection = 3359,
+  Zo_ColorLoopStartEnhancedHue = 3378,
+  Zo_ColorLoopStoredEnhancedHue = 3404,
+  Zo_ColorLoopTime = 3431,
+  Zo_ColorMode = 3445,
+  Zo_ColorMove = 3455,
+  Zo_ColorPointBIntensity = 3465,
+  Zo_ColorPointBX = 3486,
+  Zo_ColorPointBY = 3499,
+  Zo_ColorPointGIntensity = 3512,
+  Zo_ColorPointGX = 3533,
+  Zo_ColorPointGY = 3546,
+  Zo_ColorPointRIntensity = 3559,
+  Zo_ColorPointRX = 3580,
+  Zo_ColorPointRY = 3593,
+  Zo_ColorStartUpColorTempireds = 3606,
+  Zo_ColorStep = 3633,
+  Zo_ColorTempMove = 3643,
+  Zo_ColorTempMoveDown = 3657,
+  Zo_ColorTempMoveStop = 3675,
+  Zo_ColorTempMoveUp = 3693,
+  Zo_ColorTempPhysicalMaxMireds = 3709,
+  Zo_ColorTempPhysicalMinMireds = 3736,
+  Zo_ColorTempStep = 3763,
+  Zo_ColorTempStepDown = 3777,
+  Zo_ColorTempStepUp = 3795,
+  Zo_CommissioningWindow = 3811,
+  Zo_CommunicationMode = 3831,
+  Zo_CompanyName = 3849,
+  Zo_CompensationText = 3861,
+  Zo_ConfigStatus = 3878,
+  Zo_Contact = 3891,
+  Zo_ControlSequenceOfOperation = 3899,
+  Zo_ControlTemperature = 3926,
+  Zo_Coordinate1 = 3945,
+  Zo_Coordinate2 = 3957,
+  Zo_Coordinate3 = 3969,
+  Zo_CurrentBlock = 3981,
+  Zo_CurrentBlockPeriodConsumptionDelivered = 3994,
+  Zo_CurrentGroup = 4033,
+  Zo_CurrentInletEnergyCarrierDemand = 4046,
+  Zo_CurrentInletEnergyCarrierSummation = 4078,
+  Zo_CurrentMaxDemandDelivered = 4113,
+  Zo_CurrentMaxDemandDeliveredTime = 4139,
+  Zo_CurrentMaxDemandReceived = 4169,
+  Zo_CurrentMaxDemandReceivedTime = 4194,
+  Zo_CurrentOutletEnergyCarrierDemand = 4223,
+  Zo_CurrentOutletEnergyCarrierSummation = 4256,
+  Zo_CurrentPositionLift = 4292,
+  Zo_CurrentPositionLiftPercentage = 4312,
+  Zo_CurrentPositionTilt = 4342,
+  Zo_CurrentPositionTiltPercentage = 4362,
+  Zo_CurrentScene = 4392,
+  Zo_CurrentSummationDelivered = 4405,
+  Zo_CurrentSummationReceived = 4431,
+  Zo_CurrentTemperature = 4456,
+  Zo_CurrentTemperatureSetPoint = 4475,
+  Zo_CurrentZoneSensitivityLevel = 4502,
+  Zo_CustomerName = 4530,
+  Zo_DCCurrent = 4543,
+  Zo_DCCurrentDivisor = 4553,
+  Zo_DCCurrentMax = 4570,
+  Zo_DCCurrentMin = 4583,
+  Zo_DCCurrentMultiplier = 4596,
+  Zo_DCCurrentOverload = 4616,
+  Zo_DCOverloadAlarmsMask = 4634,
+  Zo_DCPower = 4655,
+  Zo_DCPowerDivisor = 4663,
+  Zo_DCPowerMax = 4678,
+  Zo_DCPowerMin = 4689,
+  Zo_DCPowerMultiplier = 4700,
+  Zo_DCVoltage = 4718,
+  Zo_DCVoltageDivisor = 4728,
+  Zo_DCVoltageMax = 4745,
+  Zo_DCVoltageMin = 4758,
+  Zo_DCVoltageMultiplier = 4771,
+  Zo_DCVoltageOverload = 4791,
+  Zo_DFTSummation = 4809,
+  Zo_DailyConsumptionTarget = 4822,
+  Zo_DailyFreezeTime = 4845,
+  Zo_DataQualityID = 4861,
+  Zo_DateCode = 4875,
+  Zo_DecelerationTimeLift = 4884,
+  Zo_DefaultMoveRate = 4905,
+  Zo_DefaultUpdatePeriod = 4921,
+  Zo_DehumidificationCooling = 4941,
+  Zo_DehumidificationHysteresis = 4965,
+  Zo_DehumidificationLockout = 4992,
+  Zo_DehumidificationMaxCool = 5016,
+  Zo_DeviceEnabled = 5040,
+  Zo_DeviceTempAlarmMask = 5054,
+  Zo_Dimmer = 5074,
+  Zo_DimmerCurrentFrequency = 5081,
+  Zo_DimmerDown = 5104,
+  Zo_DimmerMaxFrequency = 5115,
+  Zo_DimmerMaxLevel = 5134,
+  Zo_DimmerMinFrequency = 5149,
+  Zo_DimmerMinLevel = 5168,
+  Zo_DimmerMove = 5183,
+  Zo_DimmerOptions = 5194,
+  Zo_DimmerRemainingTime = 5208,
+  Zo_DimmerStartUpLevel = 5228,
+  Zo_DimmerStep = 5247,
+  Zo_DimmerStepDown = 5258,
+  Zo_DimmerStepUp = 5273,
+  Zo_DimmerStop = 5286,
+  Zo_DimmerUp = 5297,
+  Zo_DisableLocalConfig = 5306,
+  Zo_DoorClosedEvents = 5325,
+  Zo_DoorOpenEvents = 5342,
+  Zo_DoorState = 5357,
+  Zo_DriftCompensation = 5367,
+  Zo_DstEnd = 5385,
+  Zo_DstShift = 5392,
+  Zo_DstStart = 5401,
+  Zo_ElectricalMeasurementType = 5410,
+  Zo_EnergyFormatting = 5436,
+  Zo_EnergyRemote = 5453,
+  Zo_EnhancedColorMode = 5466,
+  Zo_EnhancedCurrentHue = 5484,
+  Zo_EurotronicErrors = 5503,
+  Zo_EurotronicHostFlags = 5520,
+  Zo_FanMode = 5540,
+  Zo_FanModeSequence = 5548,
+  Zo_FastPollTimeout = 5564,
+  Zo_FastPollTimeoutMax = 5580,
+  Zo_FastPollUpdatePeriod = 5599,
+  Zo_Fire = 5620,
+  Zo_FlowMaxMeasuredValue = 5625,
+  Zo_FlowMinMeasuredValue = 5646,
+  Zo_FlowRate = 5667,
+  Zo_FlowRestriction = 5676,
+  Zo_FlowTolerance = 5692,
+  Zo_GPHueStop = 5706,
+  Zo_GPIdentify = 5716,
+  Zo_GPLevelStop = 5727,
+  Zo_GPLockDoor = 5739,
+  Zo_GPMoveColor = 5750,
+  Zo_GPMoveDown = 5762,
+  Zo_GPMoveDownOnOff = 5773,
+  Zo_GPMoveHueDown = 5789,
+  Zo_GPMoveHueUp = 5803,
+  Zo_GPMoveSatDown = 5815,
+  Zo_GPMoveSatUp = 5829,
+  Zo_GPMoveUp = 5841,
+  Zo_GPMoveUpOnOff = 5850,
+  Zo_GPOff = 5864,
+  Zo_GPOn = 5870,
+  Zo_GPPress1of1 = 5875,
+  Zo_GPPress1of2 = 5887,
+  Zo_GPPress2of2 = 5899,
+  Zo_GPRelease = 5911,
+  Zo_GPRelease1of1 = 5921,
+  Zo_GPRelease1of2 = 5935,
+  Zo_GPRelease2of2 = 5949,
+  Zo_GPSatStop = 5963,
+  Zo_GPScene0 = 5973,
+  Zo_GPScene1 = 5982,
+  Zo_GPScene10 = 5991,
+  Zo_GPScene11 = 6001,
+  Zo_GPScene12 = 6011,
+  Zo_GPScene13 = 6021,
+  Zo_GPScene14 = 6031,
+  Zo_GPScene15 = 6041,
+  Zo_GPScene2 = 6051,
+  Zo_GPScene3 = 6060,
+  Zo_GPScene4 = 6069,
+  Zo_GPScene5 = 6078,
+  Zo_GPScene6 = 6087,
+  Zo_GPScene7 = 6096,
+  Zo_GPScene8 = 6105,
+  Zo_GPScene9 = 6114,
+  Zo_GPShortPress1of1 = 6123,
+  Zo_GPShortPress1of2 = 6140,
+  Zo_GPShortPress2of2 = 6157,
+  Zo_GPStepColor = 6174,
+  Zo_GPStepDown = 6186,
+  Zo_GPStepDownOnOff = 6197,
+  Zo_GPStepHueDown = 6213,
+  Zo_GPStepHueUp = 6227,
+  Zo_GPStepSatDown = 6239,
+  Zo_GPStepSatUp = 6253,
+  Zo_GPStepUp = 6265,
+  Zo_GPStepUpOnOff = 6274,
+  Zo_GPToggle = 6288,
+  Zo_GPUnlockDoor = 6297,
+  Zo_GenericDeviceClass = 6310,
+  Zo_GenericDeviceType = 6329,
+  Zo_GetAllGroups = 6347,
+  Zo_GetGroup = 6360,
+  Zo_GetSceneMembership = 6369,
+  Zo_GlassBreak = 6388,
+  Zo_GroupNameSupport = 6399,
+  Zo_HVACSystemTypeConfiguration = 6416,
+  Zo_HWVersion = 6444,
+  Zo_HarmonicCurrentMultiplier = 6454,
+  Zo_HighTempDwellTripPoint = 6480,
+  Zo_HighTempThreshold = 6503,
+  Zo_Hue = 6521,
+  Zo_HueMove = 6525,
+  Zo_HueSat = 6533,
+  Zo_HueStep = 6540,
+  Zo_HueStepDown = 6548,
+  Zo_HueStepUp = 6560,
+  Zo_Humidity = 6570,
+  Zo_HumidityMaxMeasuredValue = 6579,
+  Zo_HumidityMinMeasuredValue = 6604,
+  Zo_HumidityTolerance = 6629,
+  Zo_IASCIEAddress = 6647,
+  Zo_Identify = 6661,
+  Zo_IdentifyQuery = 6670,
+  Zo_IdentifyTime = 6684,
+  Zo_Illuminance = 6697,
+  Zo_IlluminanceLevelStatus = 6709,
+  Zo_IlluminanceLightSensorType = 6732,
+  Zo_IlluminanceMaxMeasuredValue = 6759,
+  Zo_IlluminanceMinMeasuredValue = 6787,
+  Zo_IlluminanceTargetLevel = 6815,
+  Zo_IlluminanceTolerance = 6838,
+  Zo_InletTemperature = 6859,
+  Zo_InstalledClosedLimitLift = 6876,
+  Zo_InstalledClosedLimitTilt = 6901,
+  Zo_InstalledOpenLimitLift = 6926,
+  Zo_InstalledOpenLimitTilt = 6949,
+  Zo_IntermediateSetpointsLift = 6972,
+  Zo_IntermediateSetpointsTilt = 6998,
+  Zo_IntervalReadReportingPeriod = 7024,
+  Zo_IntrinsicBallastFactor = 7052,
+  Zo_LampAlarmMode = 7075,
+  Zo_LampBurnHours = 7089,
+  Zo_LampBurnHoursTripPoint = 7103,
+  Zo_LampManufacturer = 7126,
+  Zo_LampRatedHours = 7143,
+  Zo_LampType = 7158,
+  Zo_LastConfiguredBy = 7167,
+  Zo_LastMessageLQI = 7184,
+  Zo_LastMessageRSSI = 7199,
+  Zo_LastSetTime = 7215,
+  Zo_LegrandHeatingMode = 7227,
+  Zo_LegrandMode = 7246,
+  Zo_LegrandOpt1 = 7258,
+  Zo_LegrandOpt2 = 7270,
+  Zo_LegrandOpt3 = 7282,
+  Zo_LidlPower = 7294,
+  Zo_LineCurrent = 7304,
+  Zo_LineCurrentPhB = 7316,
+  Zo_LineCurrentPhC = 7331,
+  Zo_LinkKey = 7346,
+  Zo_LocalTemperature = 7354,
+  Zo_LocalTemperatureCalibration = 7371,
+  Zo_LocalTime = 7399,
+  Zo_LocationAge = 7409,
+  Zo_LocationDescription = 7421,
+  Zo_LocationMethod = 7441,
+  Zo_LocationPower = 7456,
+  Zo_LocationType = 7470,
+  Zo_LockAlarmMask = 7483,
+  Zo_LockDefaultConfigurationRegister = 7497,
+  Zo_LockEnableInsideStatusLED = 7530,
+  Zo_LockEnableLocalProgramming = 7556,
+  Zo_LockEnableLogging = 7583,
+  Zo_LockEnableOneTouchLocking = 7601,
+  Zo_LockEnablePrivacyModeButton = 7627,
+  Zo_LockKeypadOperationEventMask = 7655,
+  Zo_LockKeypadProgrammingEventMask = 7684,
+  Zo_LockLEDSettings = 7715,
+  Zo_LockLanguage = 7731,
+  Zo_LockManualOperationEventMask = 7744,
+  Zo_LockOperatingMode = 7773,
+  Zo_LockRFIDOperationEventMask = 7791,
+  Zo_LockRFIDProgrammingEventMask = 7818,
+  Zo_LockRFOperationEventMask = 7847,
+  Zo_LockRFProgrammingEventMask = 7872,
+  Zo_LockSoundVolume = 7899,
+  Zo_LockState = 7915,
+  Zo_LockSupportedOperatingModes = 7925,
+  Zo_LockType = 7953,
+  Zo_LongPollInterval = 7962,
+  Zo_LongPollIntervalMin = 7979,
+  Zo_LowTempDwellTripPoint = 7999,
+  Zo_LowTempThreshold = 8021,
+  Zo_MainsAlarmMask = 8038,
+  Zo_MainsFrequency = 8053,
+  Zo_MainsVoltage = 8068,
+  Zo_MainsVoltageDwellTripPoint = 8081,
+  Zo_MainsVoltageMaxThreshold = 8108,
+  Zo_MainsVoltageMinThreshold = 8133,
+  Zo_Manufacturer = 8158,
+  Zo_MaxCoolSetpointLimit = 8171,
+  Zo_MaxHeatSetpointLimit = 8192,
+  Zo_MaxPINCodeLength = 8213,
+  Zo_MaxProxyTableEntries = 8230,
+  Zo_MaxRFIDCodeLength = 8251,
+  Zo_MaxSearchCounter = 8269,
+  Zo_MaxSinkTableEntries = 8286,
+  Zo_MaxTempExperienced = 8306,
+  Zo_Measured11thHarmonicCurrent = 8325,
+  Zo_Measured1stHarmonicCurrent = 8353,
+  Zo_Measured3rdHarmonicCurrent = 8380,
+  Zo_Measured5thHarmonicCurrent = 8407,
+  Zo_Measured7thHarmonicCurrent = 8434,
+  Zo_Measured9thHarmonicCurrent = 8461,
+  Zo_MeasuredPhase11thHarmonicCurrent = 8488,
+  Zo_MeasuredPhase1stHarmonicCurrent = 8521,
+  Zo_MeasuredPhase3rdHarmonicCurrent = 8553,
+  Zo_MeasuredPhase5thHarmonicCurrent = 8585,
+  Zo_MeasuredPhase7thHarmonicCurrent = 8617,
+  Zo_MeasuredPhase9thHarmonicCurrent = 8649,
+  Zo_MeterTypeID = 8681,
+  Zo_MinCoolSetpointLimit = 8693,
+  Zo_MinHeatSetpointLimit = 8714,
+  Zo_MinPINCodeLength = 8735,
+  Zo_MinRFIDCodeLength = 8752,
+  Zo_MinSetpointDeadBand = 8770,
+  Zo_MinTempExperienced = 8790,
+  Zo_Mode = 8809,
+  Zo_Model = 8814,
+  Zo_ModelId = 8820,
+  Zo_MotorStepSize = 8828,
+  Zo_Movement = 8842,
+  Zo_MullerLightMode = 8851,
+  Zo_MultiApplicationType = 8867,
+  Zo_MultiDescription = 8888,
+  Zo_MultiInApplicationType = 8905,
+  Zo_MultiInDescription = 8928,
+  Zo_MultiInNumberOfStates = 8947,
+  Zo_MultiInOutOfService = 8969,
+  Zo_MultiInReliability = 8989,
+  Zo_MultiInStatusFlags = 9008,
+  Zo_MultiInValue = 9027,
+  Zo_MultiNumberOfStates = 9040,
+  Zo_MultiOutApplicationType = 9060,
+  Zo_MultiOutDescription = 9084,
+  Zo_MultiOutNumberOfStates = 9104,
+  Zo_MultiOutOfService = 9127,
+  Zo_MultiOutOutOfService = 9145,
+  Zo_MultiOutReliability = 9166,
+  Zo_MultiOutRelinquishDefault = 9186,
+  Zo_MultiOutStatusFlags = 9212,
+  Zo_MultiOutValue = 9232,
+  Zo_MultiReliability = 9246,
+  Zo_MultiRelinquishDefault = 9263,
+  Zo_MultiStatusFlags = 9286,
+  Zo_MultiValue = 9303,
+  Zo_MultipleScheduling = 9314,
+  Zo_NeutralCurrent = 9333,
+  Zo_NotificationRetryNumber = 9348,
+  Zo_NotificationRetryTimer = 9372,
+  Zo_NumberOfDevices = 9395,
+  Zo_NumberOfHolidaySchedulesSupported = 9411,
+  Zo_NumberOfLogRecordsSupported = 9445,
+  Zo_NumberOfPINUsersSupported = 9473,
+  Zo_NumberOfPrimaries = 9499,
+  Zo_NumberOfRFIDUsersSupported = 9517,
+  Zo_NumberOfResets = 9544,
+  Zo_NumberOfTotalUsersSupported = 9559,
+  Zo_NumberOfWeekDaySchedulesSupportedPerUser = 9587,
+  Zo_NumberOfYearDaySchedulesSupportedPerUser = 9628,
+  Zo_NumberOfZoneSensitivityLevelsSupported = 9669,
+  Zo_NumberRSSIMeasurements = 9708,
+  Zo_NumberofActuationsLift = 9731,
+  Zo_NumberofActuationsTilt = 9754,
+  Zo_Occupancy = 9777,
+  Zo_OccupancySensorType = 9787,
+  Zo_OccupiedCoolingSetpoint = 9807,
+  Zo_OccupiedHeatingSetpoint = 9831,
+  Zo_OffTransitionTime = 9855,
+  Zo_OffWaitTime = 9873,
+  Zo_OnLevel = 9885,
+  Zo_OnOff = 9893,
+  Zo_OnOffTransitionTime = 9899,
+  Zo_OnTime = 9919,
+  Zo_OnTransitionTime = 9926,
+  Zo_OpenPeriod = 9943,
+  Zo_OppleMode = 9954,
+  Zo_OutdoorTemperature = 9964,
+  Zo_OutletTemperature = 9983,
+  Zo_OverTempTotalDwell = 10001,
+  Zo_PICoolingDemand = 10020,
+  Zo_PIHeatingDemand = 10036,
+  Zo_PIROccupiedToUnoccupiedDelay = 10052,
+  Zo_PIRUnoccupiedToOccupiedDelay = 10081,
+  Zo_PIRUnoccupiedToOccupiedThreshold = 10110,
+  Zo_POD = 10143,
+  Zo_Panic = 10147,
+  Zo_PartNumber = 10153,
+  Zo_PathLossExponent = 10164,
+  Zo_PersistentMemoryWrites = 10181,
+  Zo_PersonalAlarm = 10204,
+  Zo_PhaseHarmonicCurrentMultiplier = 10218,
+  Zo_PhysicalClosedLimit = 10249,
+  Zo_PhysicalClosedLimitLift = 10269,
+  Zo_PhysicalClosedLimitTilt = 10293,
+  Zo_PhysicalEnvironment = 10317,
+  Zo_Power = 10337,
+  Zo_PowerDivisor = 10343,
+  Zo_PowerFactor = 10356,
+  Zo_PowerFactorPhB = 10368,
+  Zo_PowerFactorPhC = 10383,
+  Zo_PowerMultiplier = 10398,
+  Zo_PowerOffEffect = 10414,
+  Zo_PowerOnRecall = 10429,
+  Zo_PowerOnTimer = 10443,
+  Zo_PowerSource = 10456,
+  Zo_PowerThreshold = 10468,
+  Zo_PresetReadingTime = 10483,
+  Zo_Pressure = 10501,
+  Zo_PressureMaxMeasuredValue = 10510,
+  Zo_PressureMaxScaledValue = 10535,
+  Zo_PressureMinMeasuredValue = 10558,
+  Zo_PressureMinScaledValue = 10583,
+  Zo_PressureScale = 10606,
+  Zo_PressureScaledTolerance = 10620,
+  Zo_PressureScaledValue = 10644,
+  Zo_PressureTolerance = 10664,
+  Zo_PreviousBlockPeriodConsumptionDelivered = 10682,
+  Zo_Primary1Intensity = 10722,
+  Zo_Primary1X = 10740,
+  Zo_Primary1Y = 10750,
+  Zo_Primary2Intensity = 10760,
+  Zo_Primary2X = 10778,
+  Zo_Primary2Y = 10788,
+  Zo_Primary3Intensity = 10798,
+  Zo_Primary3X = 10816,
+  Zo_Primary3Y = 10826,
+  Zo_Primary4Intensity = 10836,
+  Zo_Primary4X = 10854,
+  Zo_Primary4Y = 10864,
+  Zo_Primary5Intensity = 10874,
+  Zo_Primary5X = 10892,
+  Zo_Primary5Y = 10902,
+  Zo_Primary6Intensity = 10912,
+  Zo_Primary6X = 10930,
+  Zo_Primary6Y = 10940,
+  Zo_ProductCode = 10950,
+  Zo_ProductRevision = 10962,
+  Zo_ProductURL = 10978,
+  Zo_ProfileIntervalPeriod = 10989,
+  Zo_ProxyTable = 11011,
+  Zo_QualityMeasure = 11022,
+  Zo_RGB = 11037,
+  Zo_RHDehumidificationSetpoint = 11041,
+  Zo_RMSCurrent = 11068,
+  Zo_RMSCurrentMax = 11079,
+  Zo_RMSCurrentMaxPhB = 11093,
+  Zo_RMSCurrentMaxPhC = 11110,
+  Zo_RMSCurrentMin = 11127,
+  Zo_RMSCurrentMinPhB = 11141,
+  Zo_RMSCurrentMinPhC = 11158,
+  Zo_RMSCurrentPhB = 11175,
+  Zo_RMSCurrentPhC = 11189,
+  Zo_RMSExtremeOverVoltage = 11203,
+  Zo_RMSExtremeOverVoltagePeriod = 11225,
+  Zo_RMSExtremeOverVoltagePeriodPhB = 11253,
+  Zo_RMSExtremeOverVoltagePeriodPhC = 11284,
+  Zo_RMSExtremeUnderVoltage = 11315,
+  Zo_RMSExtremeUnderVoltagePeriod = 11338,
+  Zo_RMSExtremeUnderVoltagePeriodPhB = 11367,
+  Zo_RMSExtremeUnderVoltagePeriodPhC = 11399,
+  Zo_RMSVoltage = 11431,
+  Zo_RMSVoltageMax = 11442,
+  Zo_RMSVoltageMaxPhB = 11456,
+  Zo_RMSVoltageMaxPhC = 11473,
+  Zo_RMSVoltageMin = 11490,
+  Zo_RMSVoltageMinPhB = 11504,
+  Zo_RMSVoltageMinPhC = 11521,
+  Zo_RMSVoltagePhB = 11538,
+  Zo_RMSVoltagePhC = 11552,
+  Zo_RMSVoltageSag = 11566,
+  Zo_RMSVoltageSagPeriod = 11580,
+  Zo_RMSVoltageSagPeriodPhB = 11600,
+  Zo_RMSVoltageSagPeriodPhC = 11623,
+  Zo_RMSVoltageSwell = 11646,
+  Zo_RMSVoltageSwellPeriod = 11662,
+  Zo_RMSVoltageSwellPeriodPhB = 11684,
+  Zo_RMSVoltageSwellPeriodPhC = 11709,
+  Zo_ReactiveCurrent = 11734,
+  Zo_ReactiveCurrentPhB = 11750,
+  Zo_ReactiveCurrentPhC = 11769,
+  Zo_ReactivePower = 11788,
+  Zo_ReactivePowerPhB = 11802,
+  Zo_ReactivePowerPhC = 11819,
+  Zo_ReadingSnapShotTime = 11836,
+  Zo_RecallScene = 11856,
+  Zo_RelativeHumidity = 11868,
+  Zo_RelativeHumidityDisplay = 11885,
+  Zo_RelativeHumidityMode = 11909,
+  Zo_RemainingTime = 11930,
+  Zo_RemoteSensing = 11944,
+  Zo_RemoveAllGroups = 11958,
+  Zo_RemoveAllScenes = 11974,
+  Zo_RemoveGroup = 11990,
+  Zo_RemoveScene = 12002,
+  Zo_ReportingPeriod = 12014,
+  Zo_ResetAlarm = 12030,
+  Zo_ResetAllAlarms = 12041,
+  Zo_SWBuildID = 12056,
+  Zo_Sat = 12066,
+  Zo_SatMove = 12070,
+  Zo_SatStep = 12078,
+  Zo_SceneCount = 12086,
+  Zo_SceneNameSupport = 12097,
+  Zo_SceneValid = 12114,
+  Zo_ScheduleMode = 12125,
+  Zo_SeaPressure = 12138,
+  Zo_SecurityLevel = 12150,
+  Zo_ServerActiveFunctionality = 12164,
+  Zo_ServerFunctionality = 12190,
+  Zo_SharedSecurityKey = 12210,
+  Zo_SharedSecurityKeyType = 12228,
+  Zo_ShortPollInterval = 12250,
+  Zo_Shutter = 12268,
+  Zo_ShutterClose = 12276,
+  Zo_ShutterLift = 12289,
+  Zo_ShutterOpen = 12301,
+  Zo_ShutterStop = 12313,
+  Zo_ShutterTilt = 12325,
+  Zo_SinkTable = 12337,
+  Zo_SoftwareRevision = 12347,
+  Zo_StackVersion = 12364,
+  Zo_StandardTime = 12377,
+  Zo_StartUpOnOff = 12390,
+  Zo_Status = 12403,
+  Zo_StoreScene = 12410,
+  Zo_SupplyStatus = 12421,
+  Zo_SwitchActions = 12434,
+  Zo_SwitchType = 12448,
+  Zo_SystemMode = 12459,
+  Zo_TRVBoost = 12470,
+  Zo_TRVChildProtection = 12479,
+  Zo_TRVMirrorDisplay = 12498,
+  Zo_TRVMode = 12515,
+  Zo_TRVWindowOpen = 12523,
+  Zo_TempTarget = 12537,
+  Zo_Temperature = 12548,
+  Zo_TemperatureDisplayMode = 12560,
+  Zo_TemperatureMaxMeasuredValue = 12583,
+  Zo_TemperatureMinMeasuredValue = 12611,
+  Zo_TemperatureTolerance = 12639,
+  Zo_TerncyDuration = 12660,
+  Zo_TerncyRotate = 12675,
+  Zo_ThSetpoint = 12688,
+  Zo_ThermostatAlarmMask = 12699,
+  Zo_ThermostatKeypadLockout = 12719,
+  Zo_ThermostatOccupancy = 12743,
+  Zo_ThermostatRunningMode = 12763,
+  Zo_ThermostatScheduleProgrammingVisibility = 12785,
+  Zo_Time = 12825,
+  Zo_TimeEpoch = 12830,
+  Zo_TimeStatus = 12840,
+  Zo_TimeZone = 12851,
+  Zo_TotalActivePower = 12860,
+  Zo_TotalApparentPower = 12877,
+  Zo_TotalProfileNum = 12896,
+  Zo_TotalReactivePower = 12912,
+  Zo_TuyaCalibration = 12931,
+  Zo_TuyaCalibrationTime = 12947,
+  Zo_TuyaMCUVersion = 12967,
+  Zo_TuyaMotorReversal = 12982,
+  Zo_TuyaMovingState = 13000,
+  Zo_TuyaQuery = 13016,
+  Zo_UnoccupiedCoolingSetpoint = 13026,
+  Zo_UnoccupiedHeatingSetpoint = 13052,
+  Zo_UtilityName = 13078,
+  Zo_ValidUntilTime = 13090,
+  Zo_ValvePosition = 13105,
+  Zo_VelocityLift = 13119,
+  Zo_ViewGroup = 13132,
+  Zo_ViewScene = 13142,
+  Zo_VolumePerReport = 13152,
+  Zo_Water = 13168,
+  Zo_WhitePointX = 13174,
+  Zo_WhitePointY = 13186,
+  Zo_WindowCoveringType = 13198,
+  Zo_X = 13217,
+  Zo_Y = 13219,
+  Zo_ZCLVersion = 13221,
+  Zo_ZoneID = 13232,
+  Zo_ZoneState = 13239,
+  Zo_ZoneStatus = 13249,
+  Zo_ZoneStatusChange = 13260,
+  Zo_ZoneType = 13277,
+  Zo__ = 13286,
+  Zo_xx = 13288,
+  Zo_xx000A00 = 13291,
+  Zo_xx0A = 13300,
+  Zo_xx0A00 = 13305,
+  Zo_xx19 = 13312,
+  Zo_xx190A = 13317,
+  Zo_xx190A00 = 13324,
+  Zo_xxxx = 13333,
+  Zo_xxxx00 = 13338,
+  Zo_xxxx0A00 = 13345,
+  Zo_xxxxyy = 13354,
+  Zo_xxxxyyyy = 13361,
+  Zo_xxxxyyyy0A00 = 13370,
+  Zo_xxxxyyzz = 13383,
+  Zo_xxyy = 13392,
+  Zo_xxyy0A00 = 13397,
+  Zo_xxyyyy = 13406,
+  Zo_xxyyyy000000000000 = 13413,
+  Zo_xxyyyy0A0000000000 = 13432,
+  Zo_xxyyyyzz = 13451,
+  Zo_xxyyyyzzzz = 13460,
+  Zo_xxyyzzzz = 13471,
 };
 
 

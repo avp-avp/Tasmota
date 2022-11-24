@@ -582,7 +582,6 @@ void DisplayText(void)
             // pad field with spaces fxx
             var = atoiv(cp, &fill);
             cp += var;
-            linebuf[fill] = 0;
             break;
 #ifdef USE_UFILESYS
           case 'P':
@@ -2788,7 +2787,7 @@ void AddValue(uint8_t num,float fval) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv13(uint8_t function)
+bool Xdrv13(uint32_t function)
 {
   bool result = false;
 
