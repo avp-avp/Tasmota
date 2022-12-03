@@ -3,15 +3,30 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.2.0.5]
+## [12.2.0.6]
+### Added
+- Serial Modbus transmit enable GPIOs to all modbus energy drivers and modbus bridge (#17247)
+
+### Breaking Changed
+
+### Changed
+- TasmotaSerial library from v3.5.0 to v3.6.0
+
+### Fixed
+- TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
+
+### Removed
+
+## [12.2.0.5] 20221129
 ### Added
 - ESP32 DS18x20 parasitic power usage when defining W1_PARASITE_POWER (#17112)
 - Optional define ``SERIAL_BRIDGE_BUFFER_SIZE`` to set Serial Bridge internal buffer size (Default ESP8266 = 256, ESP32 = 800)
 - Command ``SSerialBuffer 256..SERIAL_BRIDGE_BUFFER_SIZE`` to change serial bridge rx buffer size (#17120)
 - Command ``SetOption35 0..255`` to skip number of received messages in Serial Bridge (default 0) (#17140)
 - Teleinfo TEMPO (BBR) contract (#17160)
-
-### Breaking Changed
+- Support for HLK-LD2410 24GHz smart wave motion sensor
+- Berry ``mdns`` module (#17202)
+- IPv6 preview for ESP32, also working for ESP8266
 
 ### Changed
 - Serial Bridge default internal serial rx buffer size from 64 to 256 (#17120)
