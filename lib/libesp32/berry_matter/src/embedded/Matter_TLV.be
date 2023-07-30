@@ -86,6 +86,7 @@ class Matter_TLV
   static var ARRAY  = 0x16
   static var LIST   = 0x17
   static var EOC    = 0x18
+  static var RAW    = 0xFF  # encodes an anonymous raw value (already encoded in TLV to save memory)
 
   #################################################################################
   # Matter_TLV_item class
@@ -113,6 +114,32 @@ class Matter_TLV
     end
 
     #############################################################
+    # reset - allows reuse of the object
+    def reset(parent)
+      var n = nil
+      self.parent = parent
+      self.next_idx = n
+      self.tag_vendor = n
+      self.tag_profile = n
+      self.tag_number = n
+      self.tag_sub = n
+      self.typ = n
+      self.val = n
+    end
+    
+    #############################################################
+    # set value, equivalent to create_TLV() without allocation
+    #
+    def set(t, value)
+      self.reset()
+      if value != nil || t == 0x14 #-t == matter.TLV.NULL-#   # put the actual number for performance
+        self.typ = t
+        self.val = value
+        return self
+      end
+    end
+    
+    #############################################################
     # neutral converter
     def to_TLV()
       return self
@@ -134,41 +161,65 @@ class Matter_TLV
     #
     # We are trying to follow the official Matter way of printing TLV
     # Ex: '42U' or '1 = 42U' or '0xFFF1::0xDEED:0xAA55FEED = 42U'
-    def tostring()
-      import string
+    def tostring(no_tag)
       # var s = "<instance: Matter_TLV_item("
       var s = ""
       try       # any exception raised in `tostring()` causes a crash, so better catch it here
 
-        if self.tag_profile == -1
-          s += "Matter::"
-          if self.tag_number != nil   s += string.format("0x%08X ", self.tag_number) end
-        else
-          if self.tag_vendor != nil   s += string.format("0x%04X::", self.tag_vendor) end
-          if self.tag_profile != nil   s += string.format("0x%04X:", self.tag_profile) end
-          if self.tag_number != nil   s += string.format("0x%08X ", self.tag_number) end
-          if self.tag_sub != nil   s += string.format("%i ", self.tag_sub) end
+        if no_tag != true
+          if self.tag_profile == -1
+            s += "Matter::"
+            if self.tag_number != nil   s += format("0x%08X ", self.tag_number) end
+          else
+            if self.tag_vendor != nil   s += format("0x%04X::", self.tag_vendor) end
+            if self.tag_profile != nil   s += format("0x%04X:", self.tag_profile) end
+            if self.tag_number != nil   s += format("0x%08X ", self.tag_number) end
+            if self.tag_sub != nil   s += format("%i ", self.tag_sub) end
+          end
+          if size(s) > 0    s += "= " end
         end
 
-        if size(s) > 0    s += "= " end
-
         # print value
-        if type(self.val) == 'int'        s += string.format("%i", self.val)
+        if type(self.val) == 'int'        s += format("%i", self.val)
           if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8   s += "U" end
         elif type(self.val) == 'bool'     s += self.val ? "true" : "false"
         elif self.val == nil              s += "null"
-        elif type(self.val) == 'real'     s += string.format("%g", self.val)
-        elif type(self.val) == 'string'   s += string.format('"%s"', self.val)
+        elif type(self.val) == 'real'     s += format("%g", self.val)
+        elif type(self.val) == 'string'   s += format('"%s"', self.val)
         elif isinstance(self.val, int64)  s += self.val.tostring()
           if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8   s += "U" end
         elif type(self.val) == 'instance'
-          s += string.format("%s", self.val.tohex())
+          s += format("%s", self.val.tohex())
         end
         
       except .. as e, m
         return e + " " + m
       end
       return s
+    end
+
+    # simplified version of tostring() for simple values
+    def to_str_val()
+      # print value
+      if type(self.val) == 'int'
+        if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8
+          return str(self.val) + "U"
+        else
+          return str(self.val)
+        end
+      elif type(self.val) == 'bool'     return self.val ? "true" : "false"
+      elif self.val == nil              return "null"
+      elif type(self.val) == 'real'     return str(self.val)
+      elif type(self.val) == 'string'   return self.val
+      elif isinstance(self.val, int64)
+        if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8
+          return self.val.tostring() + "U"
+        else
+          return self.val.tostring()
+        end
+      elif type(self.val) == 'instance'
+        return self.tostring(true)
+      end
     end
 
     #############################################################
@@ -223,6 +274,8 @@ class Matter_TLV
     def tlv2raw(b)
       var TLV = self.TLV
       if b == nil   b = bytes() end     # start new buffer if none passed
+
+      if self.typ == TLV.RAW  b..self.val return b   end
 
       # special case for bool
       # we need to change the type according to the value
@@ -319,6 +372,8 @@ class Matter_TLV
     def encode_len()
       var TLV = self.TLV
       var len = 0
+
+      if self.typ == TLV.RAW  return size(self.val)   end
 
       # special case for bool
       # we need to change the type according to the value
@@ -562,26 +617,26 @@ class Matter_TLV
     end
 
     #################################################################################
-    def tostring()
-      return self.tostring_inner(false, "[[", "]]")
+    def tostring(no_tag)
+      return self.tostring_inner(false, "[[", "]]", no_tag)
     end
 
-    def tostring_inner(sorted, pre, post)
-      import string
+    def tostring_inner(sorted, pre, post, no_tag)
       var s = ""
       try
 
-        if self.tag_profile == -1
-          s += "Matter::"
-          if self.tag_number != nil   s += string.format("0x%08X ", self.tag_number) end
-        else
-          if self.tag_vendor != nil   s += string.format("0x%04X::", self.tag_vendor) end
-          if self.tag_profile != nil   s += string.format("0x%04X:", self.tag_profile) end
-          if self.tag_number != nil   s += string.format("0x%08X ", self.tag_number) end
-          if self.tag_sub != nil   s += string.format("%i ", self.tag_sub) end
+        if no_tag != true
+          if self.tag_profile == -1
+            s += "Matter::"
+            if self.tag_number != nil   s += format("0x%08X ", self.tag_number) end
+          else
+            if self.tag_vendor != nil   s += format("0x%04X::", self.tag_vendor) end
+            if self.tag_profile != nil   s += format("0x%04X:", self.tag_profile) end
+            if self.tag_number != nil   s += format("0x%08X ", self.tag_number) end
+            if self.tag_sub != nil   s += format("%i ", self.tag_sub) end
+          end
+          if size(s) > 0    s += "= " end
         end
-
-        if size(s) > 0    s += "= " end
 
         s += pre
 
@@ -599,6 +654,11 @@ class Matter_TLV
         return e + " " + m
       end
       return s
+    end
+
+    # simplified version of tostring() for simple values
+    def to_str_val()
+      return self.tostring(true)
     end
 
     #################################################################################
@@ -632,7 +692,11 @@ class Matter_TLV
 
       # output each one after the other
       for v : val_list
-        v.tlv2raw(b)
+        if isinstance(v, bytes)
+          b .. v
+        else
+          v.tlv2raw(b)
+        end
       end
 
       # add 'end of container'
@@ -723,9 +787,13 @@ class Matter_TLV
     # returns `self` to allow calls to be chained
     def add_obj(tag, obj)
       if obj != nil
-        var value = obj.to_TLV()
-        value.tag_sub = tag
-        self.val.push(value)
+        if isinstance(obj, bytes)
+          self.val.push(obj)
+        else
+          var value = obj.to_TLV()
+          value.tag_sub = tag
+          self.val.push(value)
+        end
       end
       return self
     end
@@ -766,8 +834,8 @@ class Matter_TLV
     end
 
     #############################################################
-    def tostring()
-      return self.tostring_inner(true, "{", "}")
+    def tostring(no_tag)
+      return self.tostring_inner(true, "{", "}", no_tag)
     end
   end
 
@@ -782,8 +850,8 @@ class Matter_TLV
     end
 
     #############################################################
-    def tostring()
-      return self.tostring_inner(false, "[", "]")
+    def tostring(no_tag)
+      return self.tostring_inner(false, "[", "]", no_tag)
     end
 
     #############################################################
@@ -907,6 +975,12 @@ test_TLV(bytes("2502054C"), "2 = 19461U")
 test_TLV(bytes("0001"), "1")
 test_TLV(bytes("08"), "false")
 test_TLV(bytes("09"), "true")
+
+var TLV = matter.TLV
+assert(TLV.create_TLV(TLV.BOOL, 1).tlv2raw() == bytes("09"))
+assert(TLV.create_TLV(TLV.BOOL, true).tlv2raw() == bytes("09"))
+assert(TLV.create_TLV(TLV.BOOL, 0).tlv2raw() == bytes("08"))
+assert(TLV.create_TLV(TLV.BOOL, false).tlv2raw() == bytes("08"))
 
 test_TLV(bytes("00FF"), "-1")
 test_TLV(bytes("05FFFF"), "65535U")

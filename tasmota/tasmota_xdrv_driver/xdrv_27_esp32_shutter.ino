@@ -17,12 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Start temporarly extra tests for overriding USE_SHUTTER_ESP32 ****
-// Remove once tests complete
-#if defined(ESP32) && defined(USE_SHUTTER_ESP32)
-// End **************************************************************
-
-//#ifdef ESP32
+#ifdef ESP32
 #ifdef USE_SHUTTER
 /*********************************************************************************************\
  * Shutter or Blind support using two consecutive relays
@@ -50,14 +45,36 @@
 #undef  MAX_SHUTTERS_ESP32
 #define MAX_SHUTTERS_ESP32 16
 
-//
-const uint32_t SHUTTER_VERSION = 0x01010000;  // Latest driver version (See settings deltas below)
+// Define Std Text Strings
+#define D_ERROR_FILESYSTEM_NOT_READY "SHT: ERROR File system not enabled"
+#define D_ERROR_FILE_NOT_FOUND "SHT: ERROR File system not ready or file not found"
+
+const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
+  "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
+  "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>";
+
+const uint16_t SHUTTER_VERSION = 0x0100;  // Latest driver version (See settings deltas below)
+
+typedef struct { // depreciated 2023-04-28
+  int8_t pos;
+  int8_t tilt;
+  bool   mqtt_broadcast;
+} tPosition_old;
 
 typedef struct {
   int8_t pos;
   int8_t tilt;
   bool   mqtt_broadcast;
+  int8_t pos_incrdecr;
+  int8_t tilt_incrdecr;
 } tPosition;
+
+typedef struct { // depreciated 2023-04-28
+  bool         enabled;
+  bool         mqtt_all;
+  uint8_t      shutter_number;
+  tPosition_old    position[4]; 
+} tButtonSettings_old;
 
 typedef struct {
   bool         enabled;
@@ -69,7 +86,8 @@ typedef struct {
 // Global structure containing shutter saved variables
 struct SHUTTERSETTINGS {
   uint32_t      crc32;                                     // To detect file changes
-  uint32_t      version;                                   // To detect driver function changes
+  uint16_t      version;                                   // To detect driver function changes
+  uint16_t      spare;
   uint8_t       shutter_accuracy;
   uint8_t       shutter_mode;
   uint16_t      shutter_motorstop;
@@ -85,6 +103,7 @@ struct SHUTTERSETTINGS {
   uint8_t       shutter_startrelay[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_motordelay[MAX_SHUTTERS_ESP32];
   uint16_t      shutter_pwmrange[2][MAX_SHUTTERS_ESP32];
+  tButtonSettings_old shutter_button_old[MAX_SHUTTERS_ESP32*2]; // depreciated 2023-04-28
   tButtonSettings shutter_button[MAX_SHUTTERS_ESP32*2];
 } ShutterSettings;
 
@@ -115,7 +134,7 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION "|" D_CMND_SHUTTER_INCDEC "|"
-  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP;
+  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP "|" D_CMND_SHUTTER_SETUP;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
@@ -123,7 +142,8 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition, &CmndShutterIncDec,
-  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop};
+  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop,&CmndShutterSetup
+  };
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d,\"Tilt\":%d}";
   const char JSON_SHUTTER_BUTTON[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Button%d\":%d}";
@@ -172,6 +192,8 @@ struct SHUTTERGLOBAL {
   uint8_t  skip_relay_change;                // avoid overrun at endstops
   uint8_t  start_reported = 0;               // indicates of the shutter start was reported through MQTT JSON
   uint16_t open_velocity_max = RESOLUTION;   // maximum of PWM change during opening. Defines velocity on opening. Steppers and Servos only
+  bool     callibration_run = false;         // if true a callibration is running and additional measures are captured
+  uint8_t  stopp_armed = 0;                  // Count each step power usage is below limit of 1 Watt
 } ShutterGlobal;
 
 #define SHT_DIV_ROUND(__A, __B) (((__A) + (__B)/2) / (__B))
@@ -179,11 +201,6 @@ struct SHUTTERGLOBAL {
 /*********************************************************************************************\
  * Driver Settings load and save
 \*********************************************************************************************/
-
-uint32_t ShutterSettingsCrc32(void) {
-  // Use Tasmota CRC calculation function
-  return GetCfgCrc32((uint8_t*)&ShutterSettings +4, sizeof(ShutterSettings) -4);  // Skip crc32
-}
 
 void ShutterSettingsDefault(void) {
   // Init default values in case file is not found
@@ -212,6 +229,7 @@ void ShutterSettingsDefault(void) {
     ShutterSettings.shutter_position[i] = Settings->shutter_position[i];
     ShutterSettings.shutter_startrelay[i] = Settings->shutter_startrelay[i];
     ShutterSettings.shutter_motordelay[i] = Settings->shutter_motordelay[i];
+    
   }
   for (uint32_t i = 0; i < MAX_SHUTTER_KEYS; i++) { 
     ShutterSettings.shutter_button[i].shutter_number = Settings->shutter_button[i] & 0x03;
@@ -233,78 +251,92 @@ void ShutterSettingsDefault(void) {
 
 void ShutterSettingsDelta(void) {
   // Fix possible setting deltas
-
   if (ShutterSettings.version != SHUTTER_VERSION) {      // Fix version dependent changes
-/*
-    if (ShutterSettings.version < 0x01010100) {
-      AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update oldest version restore"));
 
+    if (ShutterSettings.version < 0x0100) {
+      for (uint8_t i=0; i < MAX_SHUTTERS_ESP32; i++){
+        if (ShutterSettings.shutter_startrelay[i] == 0) continue;
+        AddLog(LOG_LEVEL_INFO, PSTR("SHT:    %s SHT%d:%d"),D_CMND_SHUTTER_RELAY,i+1,ShutterSettings.shutter_startrelay[i]);
+        AddLog(LOG_LEVEL_INFO, PSTR("SHT:  %s: %d"),D_CMND_SHUTTER_OPENTIME,ShutterSettings.shutter_opentime[i]);
+        AddLog(LOG_LEVEL_INFO, PSTR("SHT: %s: %d"),D_CMND_SHUTTER_CLOSETIME,ShutterSettings.shutter_closetime[i]);
+      }
+      for (uint8_t i=0; i < MAX_SHUTTERS_ESP32*2; i++){
+        ShutterSettings.shutter_button[i].enabled = ShutterSettings.shutter_button_old[i].enabled;
+        ShutterSettings.shutter_button[i].mqtt_all = ShutterSettings.shutter_button_old[i].mqtt_all;
+        ShutterSettings.shutter_button[i].shutter_number = ShutterSettings.shutter_button_old[i].shutter_number;
+        for (uint8_t j = 0; j < 4; j++){
+          ShutterSettings.shutter_button[i].position[j].pos = ShutterSettings.shutter_button_old[i].position[j].pos;
+          ShutterSettings.shutter_button[i].position[j].tilt = ShutterSettings.shutter_button_old[i].position[j].tilt;
+          ShutterSettings.shutter_button[i].position[j].mqtt_broadcast = ShutterSettings.shutter_button_old[i].position[j].mqtt_broadcast;
+        }
+      }
     }
-    if (ShutterSettings.version < 0x01010101) {
-      AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update old version restore"));
 
-    }
-*/
     // Set current version and save settings
     ShutterSettings.version = SHUTTER_VERSION;
     ShutterSettingsSave();
   }
 }
 
-void ShutterSettingsLoad(void) {
+void ShutterSettingsLoad(bool erase) {
   // Called from FUNC_PRE_INIT once at restart
 
   // Init default values in case file is not found
   ShutterSettingsDefault();
 
-  // Try to load file /.drvset122
+  // Try to load file /.drvset027
   char filename[20];
-  // Use for sensors:
-//  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_27);
   // Use for drivers:
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_27);
 
-  AddLog(LOG_LEVEL_INFO, PSTR("SHUTTER: About to load settings from file %s"), filename);
+  AddLog(LOG_LEVEL_INFO, PSTR("SHT: About to load settings from file %s"), filename);
 
 #ifdef USE_UFILESYS
-  if (TfsLoadFile(filename, (uint8_t*)&ShutterSettings, sizeof(ShutterSettings))) {
+  if (erase) {
+    TfsDeleteFile(filename);  // Use defaults
+  }
+  else if (TfsLoadFile(filename, (uint8_t*)&ShutterSettings, sizeof(ShutterSettings))) {
     // Fix possible setting deltas
     ShutterSettingsDelta();
   } else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not ready or file not found"));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_ERROR_FILE_NOT_FOUND));
+
   }
 #else
-  AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not enabled"));
+  AddLog(LOG_LEVEL_INFO, D_ERROR_FILESYSTEM_NOT_READY);
 #endif  // USE_UFILESYS
 
-  ShutterSettings.crc32 = ShutterSettingsCrc32();
 }
 
 void ShutterSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
-
-  if (ShutterSettingsCrc32() != ShutterSettings.crc32) {
-    // Try to save file /.drvset122
-    ShutterSettings.crc32 = ShutterSettingsCrc32();
+  uint32_t crc32 = GetCfgCrc32((uint8_t*)&ShutterSettings +4, sizeof(ShutterSettings) -4);  // Skip crc32
+  if (crc32 != ShutterSettings.crc32) {
+    // Try to save file /.drvset027
+    ShutterSettings.crc32 = crc32;
 
     char filename[20];
-    // Use for sensors:
-//    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_27);
     // Use for drivers:
     snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_27);
 
-    AddLog(LOG_LEVEL_INFO, PSTR("SHUTTER: About to save settings to file %s"), filename);
+    AddLog(LOG_LEVEL_INFO, PSTR("SHT: About to save settings to file %s"), filename);
 
 #ifdef USE_UFILESYS
     if (!TfsSaveFile(filename, (const uint8_t*)&ShutterSettings, sizeof(ShutterSettings))) {
       // File system not ready: No flash space reserved for file system
-      AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not ready or unable to save file"));
+      AddLog(LOG_LEVEL_INFO, D_ERROR_FILE_NOT_FOUND);
     }
 #else
-    AddLog(LOG_LEVEL_INFO, PSTR("SHUTTER: ERROR File system not enabled"));
+    AddLog(LOG_LEVEL_INFO, D_ERROR_FILESYSTEM_NOT_READY);
 #endif  // USE_UFILESYS
   }
+}
+
+bool ShutterSettingsRestore(void) {
+  XdrvMailbox.data = (char*)&ShutterSettings;
+  XdrvMailbox.index = sizeof(ShutterSettings);
+  return true;
 }
 
 uint8_t ShutterGetRelayNoFromBitfield(power_t number) {
@@ -326,11 +358,14 @@ bool ShutterStatus(void) {
       ResponseAppend_P(PSTR("\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
                                   "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
                                   "\"Calib\":[%d,%d,%d,%d,%d],"
-                                  "\"Mode\":\"%d\"}"),
+                                  "\"Mode\":\"%d\","
+                                  "\"TiltConfig\":[%d,%d,%d,%d,%d]}"),
                                   i, ShutterSettings.shutter_startrelay[i], ShutterSettings.shutter_startrelay[i] +1, ShutterSettings.shutter_opentime[i], ShutterSettings.shutter_closetime[i],
-                                  ShutterSettings.shutter_set50percent[i], ShutterSettings.shutter_motordelay[i], GetBinary8(Settings->shutter_options[i], 4).c_str(),
+                                  ShutterSettings.shutter_set50percent[i], ShutterSettings.shutter_motordelay[i], GetBinary8(ShutterSettings.shutter_options[i], 4).c_str(),
                                   ShutterSettings.shuttercoeff[0][i], ShutterSettings.shuttercoeff[1][i], ShutterSettings.shuttercoeff[2][i], ShutterSettings.shuttercoeff[3][i], ShutterSettings.shuttercoeff[4][i],
-                                  ShutterSettings.shutter_mode);
+                                  ShutterSettings.shutter_mode, 
+                                  ShutterSettings.shutter_tilt_config[0][i], ShutterSettings.shutter_tilt_config[1][i], ShutterSettings.shutter_tilt_config[2][i], ShutterSettings.shutter_tilt_config[3][i], ShutterSettings.shutter_tilt_config[4][i]
+                                  );
     }
     ResponseJsonEndEnd();
     return true;
@@ -349,6 +384,10 @@ void ShutterLogPos(uint32_t i)
 
 uint8_t ShutterGetStartRelay(uint8_t index) {
   return ShutterSettings.shutter_startrelay[index];
+}
+
+uint8_t ShutterGetOptions(uint8_t index) {
+   return ShutterSettings.shutter_options[index];
 }
 
 int8_t ShutterGetTiltConfig(uint8_t config_idx,uint8_t index) {
@@ -421,6 +460,8 @@ void ShutterRtc50mS(void)
 
 int32_t ShutterPercentToRealPosition(int16_t percent, uint32_t index)
 {
+  // if inverted recalculate the percentposition
+  percent = (ShutterSettings.shutter_options[index] & 1) ? 100 - percent : percent;
 	if (ShutterSettings.shutter_set50percent[index] != 50) {
     return (percent <= 5) ? ShutterSettings.shuttercoeff[2][index] * percent*10 : (ShutterSettings.shuttercoeff[1][index] * percent + (ShutterSettings.shuttercoeff[0][index]*10))*10;
 	} else {
@@ -457,13 +498,13 @@ int32_t ShutterPercentToRealPosition(int16_t percent, uint32_t index)
 
 uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
 {
+  int64_t realpercent;
   if (realpos == -9999) {
     realpos = Shutter[index].real_position;
   }
 	if (ShutterSettings.shutter_set50percent[index] != 50) {
-		return (ShutterSettings.shuttercoeff[2][index] * 5 > realpos/10) ? SHT_DIV_ROUND(realpos/10, ShutterSettings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos/10-ShutterSettings.shuttercoeff[0][index]*10, ShutterSettings.shuttercoeff[1][index]);
+		realpercent = (ShutterSettings.shuttercoeff[2][index] * 5 > realpos/10) ? SHT_DIV_ROUND(realpos/10, ShutterSettings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos/10-ShutterSettings.shuttercoeff[0][index]*10, ShutterSettings.shuttercoeff[1][index]);
 	} else {
-    int64_t realpercent;
     for (uint32_t j = 0; j < 5; j++) {
       if (realpos >= Shutter[index].open_max * calibrate_pos[j+1] / 100) {
         realpercent = SHT_DIV_ROUND(ShutterSettings.shuttercoeff[j][index], 10);
@@ -481,8 +522,10 @@ uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
         break;
       }
     }
-    return realpercent < 0 ? 0 : realpercent;
   }
+   realpercent = realpercent < 0 ? 0 : realpercent;
+  // if inverted recalculate the percentposition
+  return (ShutterSettings.shutter_options[index] & 1) ? 100 - realpercent : realpercent;
 }
 
 void ShutterInit(void)
@@ -659,9 +702,7 @@ void ShutterReportPosition(bool always, uint32_t index)
       shutter_running++;
     }
     if (i && index == MAX_SHUTTERS_ESP32) { ResponseAppend_P(PSTR(",")); }
-    uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
-    uint32_t target = ShutterRealToPercentPosition(Shutter[i].target_position, i);
-    ResponseAppend_P(JSON_SHUTTER_POS, i+1, (ShutterSettings.shutter_options[i] & 1) ? 100-position : position, Shutter[i].direction,(ShutterSettings.shutter_options[i] & 1) ? 100-target : target, Shutter[i].tilt_real_pos );
+    ResponseAppend_P(JSON_SHUTTER_POS, i+1,  ShutterRealToPercentPosition(Shutter[i].real_position, i), Shutter[i].direction, ShutterRealToPercentPosition(Shutter[i].target_position, i), Shutter[i].tilt_real_pos );
   }
   ResponseJsonEnd();
   if (always || shutter_running) {
@@ -765,7 +806,7 @@ void ShutterDecellerateForStop(uint8_t i)
 
 void ShutterPowerOff(uint8_t i)
 {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop %d Mode %d time %d"), i+1,Shutter[i].switch_mode, Shutter[i].time); // fix log to indicate correct shutter number
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop %d Mode %d time %d, last source %d"), i+1,Shutter[i].switch_mode, Shutter[i].time, TasmotaGlobal.last_source); // fix log to indicate correct shutter number
   ShutterDecellerateForStop(i);
   uint8_t cur_relay = ShutterSettings.shutter_startrelay[i] + (Shutter[i].direction == 1 ? 0 : (uint8_t)(ShutterGlobal.position_mode == SHT_TIME)) ;
   if (Shutter[i].direction !=0) {
@@ -786,14 +827,18 @@ void ShutterPowerOff(uint8_t i)
     break;
     case SHT_PULSE:
       // we have a momentary switch here. Needs additional pulse on same relay after the end
-      if ((SRC_PULSETIMER == TasmotaGlobal.last_source || SRC_SHUTTER == TasmotaGlobal.last_source || SRC_WEBGUI == TasmotaGlobal.last_source)) {
-        ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
-        // switch off direction relay to make it power less
-        if (((1 << (ShutterSettings.shutter_startrelay[i])) & TasmotaGlobal.power)  && ShutterSettings.shutter_startrelay[i]+1 != cur_relay) {
-          ExecuteCommandPowerShutter(ShutterSettings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
-        }
-      } else {
-        TasmotaGlobal.last_source = SRC_SHUTTER;
+      switch (TasmotaGlobal.last_source) {
+        case SRC_PULSETIMER:
+        case SRC_SHUTTER:
+        case SRC_WEBGUI:
+          ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+          // switch off direction relay to make it power less
+          if (((1 << (ShutterSettings.shutter_startrelay[i])) & TasmotaGlobal.power)  && ShutterSettings.shutter_startrelay[i]+1 != cur_relay) {
+            ExecuteCommandPowerShutter(ShutterSettings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
+          }
+          break;
+        default:
+          TasmotaGlobal.last_source = SRC_SHUTTER;
       }
     break;
   }
@@ -835,40 +880,72 @@ void ShutterUpdatePosition(void)
 {
   char scommand[CMDSZ];
   char stopic[TOPSZ];
+  
+  // Iterate through all available shutters
   for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
+    // Check if the shutter is in motion
     if (Shutter[i].direction != 0) {
+      // Report the position of the shutter if not already done
       if (!ShutterGlobal.start_reported) {
         ShutterReportPosition(true, i);
         ShutterGlobal.start_reported = 1;
       }
+      // Update time information
       int32_t deltatime = Shutter[i].time-Shutter[i].last_reported_time;
       Shutter[i].last_reported_time = Shutter[i].time+1;
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Time %d(%d), cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, aPos2 %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
         i+1, Shutter[i].time, deltatime, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
         next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
          Shutter[i].tiltmoving);
+
+      // Check calibration mode and energy information
+      if (ShutterGlobal.callibration_run ) {
+        // update energy consumption on every loop to dectect stop of the shutter
+        XnrgCall(FUNC_ENERGY_EVERY_SECOND);
+        // fency calculation with direction gives index 0 and 1 of the energy meter
+        // stop if endpoint is reached
+        if (Energy->active_power[0]+Energy->active_power[1] < 1.0 && Shutter[i].time > 20){
+          ShutterGlobal.stopp_armed++;
+          AddLog(LOG_LEVEL_INFO, PSTR("SHT: stopp_armed:%d"),ShutterGlobal.stopp_armed);
+          if (ShutterGlobal.stopp_armed > 2) {
+            Shutter[i].target_position = Shutter[i].real_position;
+          }
+        } else {
+          ShutterGlobal.stopp_armed = 0;
+        }
+      }
+      // Check if shutter reached its target position or if the speed falls below the minimum value
       if ( ((Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction &&  Shutter[i].tiltmoving==0) ||
            ((int16_t)Shutter[i].tilt_real_pos * Shutter[i].direction * Shutter[i].tilt_config[2] >= (int16_t)Shutter[i].tilt_target_pos * Shutter[i].direction * Shutter[i].tilt_config[2] && Shutter[i].tiltmoving==1))
            || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<PWM_MIN)) {
+        // Save the last direction if the shutter is in motion
         if (Shutter[i].direction != 0) {
           Shutter[i].lastdirection = Shutter[i].direction;
         }
         ShutterPowerOff(i);
         ShutterLimitRealAndTargetPositions(i);
+
+        // Update the shutter position setting to the current real position as a percentage
         ShutterSettings.shutter_position[i] = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+        
+        // Update the shutter start position to the current real position
         Shutter[i].start_position = Shutter[i].real_position;
 
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pre: Tilt not match %d -> %d, moving: %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos,Shutter[i].tiltmoving);
+        // Check if the tilt position doesn't match the target tilt position and the shutter is not currently tilting
         if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange && Shutter[i].tiltmoving == 0) {
           AddLog(LOG_LEVEL_INFO, PSTR("SHT: Tilt not match %d -> %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos);
+          // Prepare the command to update the shutter position
           char databuf[1] = "";
           XdrvMailbox.data = databuf;
           XdrvMailbox.payload = -99;
           XdrvMailbox.index = i+1;
+          // Set the shutter to tilting mode
           Shutter[i].tiltmoving = 1;
           CmndShutterPosition();
           return;
         } else {
+          // Update the shutter tilt position setting to the current real tilt position
           ShutterSettings.shutter_tilt_pos[i] = Shutter[i].tilt_real_pos;
         }
         ShutterLogPos(i);
@@ -877,10 +954,11 @@ void ShutterUpdatePosition(void)
           // sending MQTT result to broker
           snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
           GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
-          Response_P("%d", (ShutterSettings.shutter_options[i] & 1) ? 100 - ShutterSettings.shutter_position[i]: ShutterSettings.shutter_position[i]);
+          Response_P("%d", ShutterSettings.shutter_position[i]);
           MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
         }
 
+        // Report the shutter position
         ShutterReportPosition(true, i);
         TasmotaGlobal.rules_flag.shutter_moved = 1;
       }
@@ -981,6 +1059,7 @@ int32_t ShutterCalculatePosition(uint32_t i)
       case SHT_TIME_UP_DOWN:
       case SHT_TIME_GARAGE:
         if (Shutter[i].tilt_config[2] > 0) {
+          // the tilt time is defined and therefore the tiltposition must be calculated
           if (Shutter[i].time <= Shutter[i].venetian_delay+Shutter[i].motordelay) {
            Shutter[i].tilt_real_pos = (Shutter[i].tilt_start_pos + ((Shutter[i].direction * (int16_t)(Shutter[i].time - tmin(Shutter[i].motordelay, Shutter[i].time)) * (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0])) / Shutter[i].tilt_config[2]));
           } else {
@@ -1037,53 +1116,39 @@ void ShutterRelayChanged(void)
       if (powerstate_local > 0) {
         Shutter[i].tiltmoving = 0;
       }
-      switch (ShutterGlobal.position_mode) {
-        // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
-        case SHT_TIME_UP_DOWN:
-        case SHT_COUNTER:
-        case SHT_PWM_VALUE:
-        case SHT_PWM_TIME:
-          //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: power off manual change"));
-          ShutterPowerOff(i);
-          switch (powerstate_local) {
-            case 1:
-              ShutterStartInit(i, 1, Shutter[i].open_max);
-              break;
-            case 3:
-              ShutterStartInit(i, -1, 0);
-              break;
-            default:
-              //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Switch OFF motor."),i);
+         switch (ShutterGlobal.position_mode) {
+          // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
+          case SHT_TIME_UP_DOWN:
+          case SHT_COUNTER:
+          case SHT_PWM_VALUE:
+          case SHT_PWM_TIME:
+            ShutterPowerOff(i);			 
+          case SHT_TIME: {
+            // powerstate_local == 0 => direction=0, stop
+            // powerstate_local == 1 => direction=1, target=Shutter[i].open_max
+            // powerstate_local == 2 => direction=-1, target=0 // only happen on SHT_TIME
+            // powerstate_local == 3 => direction=-1, target=0 // only happen if NOT SHT_TIME
+            int8_t direction = (powerstate_local == 0) ? 0 : (powerstate_local == 1) ? 1 : -1;
+            int32_t target =    (powerstate_local == 1) ? Shutter[i].open_max : 0;
+
+            if (direction != 0) {
+              ShutterStartInit(i, direction, target);
+            } else {
               Shutter[i].target_position = Shutter[i].real_position;
               Shutter[i].last_stop_time = millis();
             }
-        break;
-        case SHT_TIME:
-          switch (powerstate_local) {
-            case 1:
-              ShutterStartInit(i, 1, Shutter[i].open_max);
-              break;
-            case 2:
-              ShutterStartInit(i, -1, 0);
-              break;
-              default:
-                //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Switch OFF motor."),i+1);
-                Shutter[i].target_position = Shutter[i].real_position;
-                Shutter[i].last_stop_time = millis();
+            break;
           }
-        break;
-        case SHT_TIME_GARAGE:
-         switch (powerstate_local) {
-           case 1:
-             ShutterStartInit(i, Shutter[i].lastdirection*-1 , Shutter[i].lastdirection == 1 ?  0 : Shutter[i].open_max);
-             AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Garage. NewTarget %d"), i, Shutter[i].target_position);
-           break;
-           default:
-            Shutter[i].target_position = Shutter[i].real_position;
-         }
-
-
-			  } // switch (ShutterGlobal.position_mode)
+          case SHT_TIME_GARAGE:
+            switch (powerstate_local) {
+              case 1:
+                ShutterStartInit(i, Shutter[i].lastdirection * -1, Shutter[i].lastdirection == 1 ? 0 : Shutter[i].open_max);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Garage. NewTarget %d"), i, Shutter[i].target_position);
+                break;
+              default:
+                Shutter[i].target_position = Shutter[i].real_position;
+            }
+        }        
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Target %ld, Power: %d, tiltmv: %d"), i+1, Shutter[i].target_position, powerstate_local,Shutter[i].tiltmoving);
 		 } // if (manual_relays_changed)
   } // for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++)
@@ -1123,7 +1188,11 @@ bool ShutterButtonHandlerMulti(void)
   char databuf[1] = "";
   XdrvMailbox.data = databuf;
   XdrvMailbox.command = NULL;
-  uint8_t position = ShutterSettings.shutter_button[button_index].position[pos_press_index].pos;
+  int8_t position = ShutterSettings.shutter_button[button_index].position[pos_press_index].pos;
+  if (position == -1) {
+    position = tmin(100,tmax(0,ShutterRealToPercentPosition(Shutter[XdrvMailbox.index-1].real_position, XdrvMailbox.index-1)
+               + ShutterSettings.shutter_button[button_index].position[pos_press_index].pos_incrdecr));
+  }
   XdrvMailbox.payload = position;
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d -> %d"), shutter_index+1, position);
   if (102 == position) {
@@ -1136,9 +1205,21 @@ bool ShutterButtonHandlerMulti(void)
     }
     // set the tilt
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Target tilt %d for button %d"), ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt, button_index+1);
-    if (ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt != -128) {
-      Shutter[shutter_index].tilt_target_pos_override = ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt;
+    switch (ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt) {
+      // No change in tilt defined
+      case -128:
+      break;
+      // tilt change defined on position or (127) incr/decr
+      case 127:
+        Shutter[shutter_index].tilt_target_pos_override = Shutter[shutter_index].tilt_real_pos + ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt_incrdecr;
+      break;
+      default:
+        Shutter[shutter_index].tilt_target_pos_override = ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt;
     }
+
+    // set the tilt
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Target tilt %d for button %d"), Shutter[shutter_index].tilt_target_pos_override, button_index+1);
+
     // reset button to default
     Button.press_counter[button_index] = 0;
       
@@ -1164,9 +1245,6 @@ bool ShutterButtonHandlerMulti(void)
   ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, button_index+1 , button_press_counter);
   ResponseJsonEnd();
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
-
-
-
 
   return true;
 }
@@ -1200,7 +1278,6 @@ bool ShutterButtonHandler(void)
     Button.press_counter[button_index] = 0;
     return true;
   }
-
 
   //long press detected. Start moving shutter into direction
   if (PRESSED == button
@@ -1242,6 +1319,11 @@ void ShutterToggle(bool dir)
   }
 }
 
+void ShutterShow(){
+  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
+    WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (ShutterSettings.shutter_options[i] & 1) ? D_OPEN : D_CLOSE,(ShutterSettings.shutter_options[i] & 1) ? D_CLOSE : D_OPEN, ShutterRealToPercentPosition(-9999, i), i+1);
+  }
+}
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -1339,6 +1421,7 @@ void CmndShutterStop(void)
 
         AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
         Shutter[i].target_position = Shutter[i].real_position;
+        TasmotaGlobal.last_source = SRC_SHUTTER;
       }
       if (XdrvMailbox.command)
         ResponseCmndDone();
@@ -1397,11 +1480,11 @@ void CmndShutterPosition(void)
       if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.payload <= 0)) {
         // set len to 0 to avoid loop on close where payload is 0
         XdrvMailbox.data_len = 0;
-        if ( ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
+        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
           return;
         }
-        if ( ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE))) {
+        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_DOWN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE))) {
           CmndShutterClose();
           return;
         }
@@ -1428,15 +1511,14 @@ void CmndShutterPosition(void)
 
       //override tiltposition if explicit set (shutterbutton)
       if (Shutter[index].tilt_target_pos_override != -128) {
-         Shutter[index].tilt_target_pos = tmin(tmax( Shutter[index].tilt_config[0],Shutter[index].tilt_target_pos_override ), Shutter[index].tilt_config[1]);
+        Shutter[index].tilt_target_pos = tmin(tmax( Shutter[index].tilt_config[0],Shutter[index].tilt_target_pos_override ), Shutter[index].tilt_config[1]);
         Shutter[index].tilt_target_pos_override = -128;
       }
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);
       // webgui still send also on inverted shutter the native position.
-      target_pos_percent = ((ShutterSettings.shutter_options[index] & 1) && (SRC_WEBGUI != TasmotaGlobal.last_source)) ? 100 - target_pos_percent : target_pos_percent;
+      target_pos_percent = ((ShutterSettings.shutter_options[index] & 1) && (SRC_WEBGUI == TasmotaGlobal.last_source)) ? 100 - target_pos_percent : target_pos_percent;
       if (XdrvMailbox.payload != -99) {
-        //target_pos_percent = (ShutterSettings.shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent;
         Shutter[index].target_position = ShutterPercentToRealPosition(target_pos_percent, index);
         //Shutter[i].accelerator[index] = ShutterGlobal.open_velocity_max / ((Shutter[i].motordelay[index] > 0) ? Shutter[i].motordelay[index] : 1);
         //Shutter[i].target_position[index] = XdrvMailbox.payload < 5 ?  ShutterSettings.shuttercoeff[2][index] * XdrvMailbox.payload : ShutterSettings.shuttercoeff[1][index] * XdrvMailbox.payload + ShutterSettings.shuttercoeff[0,index];
@@ -1489,6 +1571,7 @@ void CmndShutterPosition(void)
               }
             break;
             case SHT_TIME_GARAGE:
+              //AddLog(LOG_LEVEL_INFO, PSTR("SHT: Garage Skip Relay: %d"), ShutterGlobal.skip_relay_change);
               if (!ShutterGlobal.skip_relay_change) {
                 if (new_shutterdirection == Shutter[index].lastdirection) {
                   AddLog(LOG_LEVEL_INFO, PSTR("SHT: Garage not move in this direction: %d"), Shutter[index].switch_mode == SHT_PULSE);
@@ -1561,11 +1644,6 @@ void CmndShutterCloseTime(void)
       ShutterSettings.shutter_closetime[XdrvMailbox.index -1] = (uint16_t)(10 * CharToFloat(XdrvMailbox.data));
       ShutterInit();
     }
-/*
-    char time_chr[10];
-    dtostrfd((float)(ShutterSettings.shutter_closetime[XdrvMailbox.index -1]) / 10, 1, time_chr);
-    ResponseCmndIdxChar(time_chr);
-*/
     ResponseCmndIdxFloat((float)(ShutterSettings.shutter_closetime[XdrvMailbox.index -1]) / 10, 1);
   }
 }
@@ -1578,11 +1656,6 @@ void CmndShutterMotorDelay(void)
       ShutterInit();
       //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr Init1. realdelay %d"),Shutter[XdrvMailbox.index -1].motordelay);
     }
-/*
-    char time_chr[10];
-    dtostrfd((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2, time_chr);
-    ResponseCmndIdxChar(time_chr);
-*/
     ResponseCmndIdxFloat((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2);
   }
 }
@@ -1646,7 +1719,7 @@ void CmndShutterButton(void)
     // (setting>> 2)&(0x3f) : shutter_position single press 0 disabled, 1..101 == 0..100%, 102 == toggle
     // (setting>> 0)&(0x03) : shutter_index
     if (XdrvMailbox.data_len > 0) {
-        uint32_t i = 0;
+        uint32_t i = 0; // tokencount on " "
         uint32_t button_index = 0;
         bool done = false;
         bool isShortCommand = false;
@@ -1659,44 +1732,62 @@ void CmndShutterButton(void)
         for (char *str = strtok_r(data_copy, " ", &str_ptr); str && i < (1+4+4+1); str = strtok_r(nullptr, " ", &str_ptr), i++) {
           int field = -1;
           int tilt = -128;
-          int j = 0;
+          int pos_incrdecr = 0;
+          int tilt_incrdecr = 0;
+          int j = 0;  // tokencount on "/"
           char field_copy[strlen(str) +1];
           strncpy(field_copy, str, sizeof(field_copy));  // Duplicate data as strtok_r will modify it.
-          // Loop through the data string, splitting on '/' seperators.
+          // Loop through the data string, splitting on '/' seperators. Syntax position[0..100]/tilt[-90..90]
           for (char *str2 = strtok_r(field_copy, "/", &str_ptr2); str2 && j < 2; str2 = strtok_r(nullptr, "/", &str_ptr2), j++) {
             switch (j) {
               case 0:
                 switch (str2[0]) {
-                  case '-':
-                    field = -1;
-                    break;
-                  case 't':
+                  case 't': // toggle the tilt. currently not implemented
                     field = 102;
+                    break;
+                  case '-':
+                  case '+':
+                    field = -1;
+                    // check for trigger -- or ++ for incremental change
+                    if (str2[1] == '-' || str2[1] == '+') {
+                      str2[0] = ' ';
+                      pos_incrdecr = atoi(str2);
+                    }
                     break;
                   default:
                   field = atoi(str2);
                   break;
                 }
+                if (i>0)
+                  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: FINAL: pos:%d, inc:%d, string:%s"),field,pos_incrdecr,str2);
                 break;
               case 1:
                 switch (str2[0]) {
-                  case '-': // special handling to seperate a - from a negative number. e.g. -90
-                    if (strlen(str2)==1) {
-                      tilt = -128;
-                    } else {
-                      tilt = atoi(str2);
-                    }
-                    break;
                   case 't':
                     tilt = 127;
+                    break;
+                  case '-': // special handling to seperate a - from a negative number. e.g. -90
+                  case '+':
+                    if (strlen(str2)==1 && str2[0] == '-') {
+                      tilt = -128;
+                    } else {
+                      if (str2[1] == '-' || str2[1] == '+') {
+                        str2[0] = ' ';
+                        tilt = 127;
+                        tilt_incrdecr = atoi(str2);
+                      } else {
+                        tilt = atoi(str2);
+                      }
+                    }
                     break;
                   default:
                   tilt = atoi(str2);
                   break;
                 }
+                AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: FINAL: tilt:%d, inc:%d, string:%s"),tilt,tilt_incrdecr,str2);
                 break;
             }
-          }
+          } //  end scanning "++10/-90" tokens
           switch (i) {
             case 0:
               if ((field >= -1) && (field<=MAX_SHUTTERS_ESP32*2)) {
@@ -1744,10 +1835,17 @@ void CmndShutterButton(void)
             */
             case 3:
             case 4:
+              AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: CASE4: pos:%d, tilt:%d, incpos:%d, inctilt:%d"), 
+                 field,tilt,pos_incrdecr,tilt_incrdecr);
+
               if ((field >= -1) && (field<=102))
                 setting.position[i-1].pos = field;
               if ((tilt >= -128) && (tilt<=127))
-                setting.position[i-1].tilt = tilt;                
+                setting.position[i-1].tilt = tilt;  
+              if ((pos_incrdecr >= -100) && (pos_incrdecr <= 100))
+                setting.position[i-1].pos_incrdecr = pos_incrdecr; 
+              if ((tilt_incrdecr >= -90) && (tilt_incrdecr <= 90))
+                setting.position[i-1].tilt_incrdecr = tilt_incrdecr;              
             break;
             case 5:
             case 6:
@@ -1791,18 +1889,44 @@ void CmndShutterButton(void)
           for (uint32_t j=0 ; j < 4 ; j++) {
             int8_t pos = setting.position[j].pos;
             int8_t postilt = setting.position[j].tilt;
+            int8_t pos_incrdecr = setting.position[j].pos_incrdecr;
+            int8_t tilt_incrdecr = setting.position[j].tilt_incrdecr;
+            AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Merging: pos:%d, tilt:%d, incpos:%d, inctilt:%d"), 
+                 pos,postilt,pos_incrdecr,tilt_incrdecr);
             if (0 <= pos)
               if (102 == pos) {
                 setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR(" t"));
               } else {
                 setting_chr_ptr += snprintf_P(setting_chr_ptr, 5, PSTR(" %d"), pos);
               }
-            else
-              setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR(" -"));
-            if (-128 != postilt) {
+            else {
+              switch (pos_incrdecr) {
+                  case 0:
+                    setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR(" -"));
+                  break;
+                  default:
+                    if (pos_incrdecr > 0)
+                      setting_chr_ptr += snprintf_P(setting_chr_ptr, 6, PSTR(" ++%d"), pos_incrdecr);
+                    else
+                      setting_chr_ptr += snprintf_P(setting_chr_ptr, 6, PSTR(" -%d"), pos_incrdecr);
+                  break;
+              }
+            }
+              
+            if (-128 != postilt || tilt_incrdecr !=0) {
               setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR("/"));
               if (127 == postilt) {
-                setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR("t"));
+                switch (tilt_incrdecr) {
+                  case 0:
+                    setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR("t"));
+                  break;
+                  default:
+                    if (tilt_incrdecr > 0)
+                      setting_chr_ptr += snprintf_P(setting_chr_ptr, 5, PSTR("++%d"), tilt_incrdecr);
+                    else
+                      setting_chr_ptr += snprintf_P(setting_chr_ptr, 5, PSTR("-%d"), tilt_incrdecr);
+                  break;
+                }
               } else {
                 setting_chr_ptr += snprintf_P(setting_chr_ptr, 5, PSTR("%d"), postilt);
               }
@@ -1827,6 +1951,10 @@ void CmndShutterSetHalfway(void)
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
       ShutterSettings.shutter_set50percent[XdrvMailbox.index -1] = (ShutterSettings.shutter_options[XdrvMailbox.index -1] & 1) ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
       ShutterSettings.shuttercoeff[0][XdrvMailbox.index -1] = 0;
+      if (XdrvMailbox.payload == ShutterSettings.shutter_position[XdrvMailbox.index -1]){
+        ShutterSettings.shutter_position[XdrvMailbox.index -1] = 50;
+      }
+      // Init calculates the realposition from the %-Position
       ShutterInit();
     }
   ResponseCmndIdxNumber((ShutterSettings.shutter_options[XdrvMailbox.index -1] & 1) ? 100 - ShutterSettings.shutter_set50percent[XdrvMailbox.index -1] : ShutterSettings.shutter_set50percent[XdrvMailbox.index -1]);
@@ -1850,6 +1978,7 @@ void CmndShutterSetClose(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     Shutter[XdrvMailbox.index -1].real_position = 0;
     Shutter[XdrvMailbox.index -1].tilt_real_pos = Shutter[XdrvMailbox.index -1].tilt_config[0];
+    Shutter[XdrvMailbox.index -1].lastdirection = -1;
     ShutterStartInit(XdrvMailbox.index -1, 0, 0);
     ShutterSettings.shutter_position[XdrvMailbox.index -1] = 0;
     ResponseCmndIdxChar(D_CONFIGURATION_RESET);
@@ -1861,6 +1990,7 @@ void CmndShutterSetOpen(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     Shutter[XdrvMailbox.index -1].real_position = Shutter[XdrvMailbox.index -1].open_max;
     Shutter[XdrvMailbox.index -1].tilt_real_pos = Shutter[XdrvMailbox.index -1].tilt_config[1];
+    Shutter[XdrvMailbox.index -1].lastdirection = 1;
     ShutterStartInit(XdrvMailbox.index -1, 0, Shutter[XdrvMailbox.index -1].open_max);
     ShutterSettings.shutter_position[XdrvMailbox.index -1] = 100;
     ResponseCmndIdxChar(D_CONFIGURATION_RESET);
@@ -2028,6 +2158,89 @@ void CmndShutterMotorStop(void)
   }
 }
 
+uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
+  uint32_t cycle_time = 0;
+  bool     started = false;
+  uint32_t last_time;
+  char     time_chr[10];
+
+  last_time = millis();
+  while (!started && millis()-last_time < max_runtime * 1000) {
+    loop();
+    if (Shutter[i].direction) {
+      started = true;
+      last_time = millis();
+    }
+  }
+  if (!started) return 0;
+  AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. Start detected. Waiting for STOP"));
+  while (Shutter[i].direction && millis()-last_time < max_runtime * 1000) {
+    loop();
+  }
+  if (Shutter[i].direction) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. No stop detected... Cancel"));
+    return 0;
+  } 
+  // reduce cycle time by 0.1 because 2 Steps required to detect motorstop
+  cycle_time = (millis()-last_time)/100 - (Shutter[i].motordelay * 10 / STEPS_PER_SECOND)-0.1 ;
+  dtostrfd((float)(cycle_time) / 10, 1, time_chr);
+  AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. Cycletime is: %s sec"),time_chr);
+  return cycle_time;
+}
+
+void CmndShutterSetup(void) {
+  uint8_t index_no;
+  char time_chr[10];
+  uint32_t new_opentime;
+  uint32_t new_closetime;
+  uint8_t  max_runtime = 120; // max 120 seconds runtime
+
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
+    index_no = XdrvMailbox.index-1; // save, because will be changed in following operations
+    // init shutter to default settings
+    ShutterGlobal.callibration_run = true;
+    ShutterSettings.shutter_position[index_no] = 0;
+    ShutterSettings.shutter_closetime[index_no] = max_runtime * 10;
+    ShutterSettings.shutter_opentime[index_no] = max_runtime * 10;
+    ShutterInit();
+    if (Energy->phase_count > 1) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Ensure shutter is close. Now open, autostop detect. max duration is 2min Phase:%d"),Energy->phase_count);
+      ShutterWaitForMotorStop(index_no);
+      CmndShutterOpen();
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Ensure shutter is close. Now open and stop when open. max duration is 2min"));
+    }
+
+    new_opentime = ShutterGetCycleTime(index_no, max_runtime);
+    if (new_opentime) {
+      ShutterSettings.shutter_position[index_no] = 100;
+      ShutterInit();  
+      if (Energy->phase_count > 1) {
+        AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Now close, autostop detect. max duration is 2min"));
+        ShutterWaitForMotorStop(index_no); 
+        CmndShutterClose();
+      }else {
+        AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Now close and stop when closed. max duration is 2min"));
+      }
+
+      new_closetime = ShutterGetCycleTime(index_no, max_runtime);
+      ShutterSettings.shutter_position[index_no] = 0;
+      if (new_closetime)  {
+        ShutterSettings.shutter_opentime[index_no] = new_opentime;
+        ShutterSettings.shutter_closetime[index_no] = new_closetime;
+        //good default value for normal european shutters. Setting here because Position == 0
+        ShutterSettings.shutter_set50percent[index_no] = 70;
+        ShutterInit();
+      } 
+    } 
+    ShutterGlobal.callibration_run = false;
+  } else {
+    // print out help instructions
+    // will only work without TILT configuration
+  }
+  return;
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -2044,13 +2257,19 @@ bool Xdrv27(uint32_t function)
     char stemp1[10];
     power_t save_powermatrix;
     switch (function) {
+      case FUNC_RESTORE_SETTINGS:
+        result = ShutterSettingsRestore();
+        break;
       case FUNC_SAVE_SETTINGS:
         ShutterSettingsSave();
-      break;
+        break;
       case FUNC_PRE_INIT:
-        ShutterSettingsLoad();
+        ShutterSettingsLoad(0);
         ShutterInit();
         break;
+      case FUNC_RESET_SETTINGS:
+        ShutterSettingsLoad(1);
+      break;
       case FUNC_EVERY_50_MSECOND:
         ShutterUpdatePosition();
         break;
@@ -2068,14 +2287,11 @@ bool Xdrv27(uint32_t function)
         break;
       case FUNC_JSON_APPEND:
         for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-          uint8_t position = (ShutterSettings.shutter_options[i] & 1) ? 100 - ShutterSettings.shutter_position[i] : ShutterSettings.shutter_position[i];
-          uint8_t target   = (ShutterSettings.shutter_options[i] & 1) ? 100 - ShutterRealToPercentPosition(Shutter[i].target_position, i) : ShutterRealToPercentPosition(Shutter[i].target_position, i);
-
           ResponseAppend_P(",");
-          ResponseAppend_P(JSON_SHUTTER_POS, i+1, position, Shutter[i].direction,target, Shutter[i].tilt_real_pos);
+          ResponseAppend_P(JSON_SHUTTER_POS, i+1, ShutterRealToPercentPosition(Shutter[i].real_position, i), Shutter[i].direction, ShutterRealToPercentPosition(Shutter[i].target_position, i), Shutter[i].tilt_real_pos);
 #ifdef USE_DOMOTICZ
           if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
-             DomoticzSensor(DZ_SHUTTER, position);
+             DomoticzSensor(DZ_SHUTTER, ShutterRealToPercentPosition(Shutter[i].real_position, i));
           }
 #endif  // USE_DOMOTICZ
         }
@@ -2085,7 +2301,7 @@ bool Xdrv27(uint32_t function)
         // extract the number of the relay that was switched and save for later in Update Position.
         ShutterGlobal.RelayCurrentMask = XdrvMailbox.index ^ ShutterGlobal.RelayOldMask;
         ShutterGlobal.LastChangedRelay = ShutterGetRelayNoFromBitfield(XdrvMailbox.index ^ ShutterGlobal.RelayOldMask);
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER Relaymask %d SwitchedRelay:%d by %s, payload %d, powermask %d"), ShutterGlobal.RelayOldMask, ShutterGlobal.LastChangedRelay,GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource),XdrvMailbox.payload, TasmotaGlobal.power);
+        //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER Relaymask %d SwitchedRelay:%d by %s, payload %d, powermask %d"), ShutterGlobal.RelayOldMask, ShutterGlobal.LastChangedRelay,GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource),XdrvMailbox.payload, TasmotaGlobal.power);
         save_powermatrix = TasmotaGlobal.power; // can be changed in ShutterRelayChanged
         if (!ShutterGlobal.LastChangedRelay) {
           ShutterGlobal.skip_relay_change = 1;
@@ -2107,7 +2323,7 @@ bool Xdrv27(uint32_t function)
           //ExecuteCommandPowerShutter(i+1, 0, SRC_SHUTTER); // should not required anymore. check for bugs
           if (ShutterGlobal.LastChangedRelay) ShutterGlobal.RelayOldMask = TasmotaGlobal.power ^=  1<<(ShutterGlobal.LastChangedRelay-1);
         }
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_DEVICE_POWER end. powermask %ld, current rel: %ld"), TasmotaGlobal.power, ShutterGlobal.RelayOldMask);
+        //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_DEVICE_POWER end. powermask %ld, current rel: %ld"), TasmotaGlobal.power, ShutterGlobal.RelayOldMask);
       break;
       case FUNC_BUTTON_MULTI_PRESSED:
       if (XdrvMailbox.index < MAX_SHUTTERS_ESP32*2 && ShutterSettings.shutter_button[XdrvMailbox.index].enabled) {
@@ -2121,6 +2337,11 @@ bool Xdrv27(uint32_t function)
           result = false;
         }
       break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        ShutterShow();
+        break;
+#endif  // USE_WEBSERVER
     }
   }
   return result;
@@ -2184,6 +2405,6 @@ void CmndShutterUnitTest(void) {
 }
 #else
 void CmndShutterUnitTest(void) {}
-#endif
+#endif // SHUTTER_UNITTEST
 
 #endif  // ESP32

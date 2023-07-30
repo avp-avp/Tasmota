@@ -123,6 +123,7 @@
 #define D_JSON_MODEL "Model"
 #define D_JSON_MOISTURE "Moisture"
 #define D_JSON_MQTT_COUNT "MqttCount"
+#define D_JSON_NA "n/a"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
@@ -237,6 +238,7 @@
 #define D_JSON_MY "YaxisInduction"
 #define D_JSON_MZ "ZaxisInduction"
 #define D_JSON_MAGNETICFLD "MagneticInduction"
+#define D_JSON_BATTPERCENT "BatteryPercentage"
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
 #define D_RSLT_INFO "INFO"
@@ -535,6 +537,7 @@
   #define D_JSON_IRHVAC_VENDOR "Vendor"
   #define D_JSON_IRHVAC_PROTOCOL "Protocol"
   #define D_JSON_IRHVAC_MODEL "Model"
+  #define D_JSON_IRHVAC_COMMAND "Command"
   #define D_JSON_IRHVAC_POWER "Power"
   #define D_JSON_IRHVAC_MODE "Mode"
   #define D_JSON_IRHVAC_FANSPEED "FanSpeed"
@@ -551,10 +554,15 @@
   #define D_JSON_IRHVAC_CLEAN "Clean"
   #define D_JSON_IRHVAC_SLEEP "Sleep"
   #define D_JSON_IRHVAC_CLOCK "Clock"
+  #define D_JSON_IRHVAC_IFEEL "iFeel"
+  #define D_JSON_IRHVAC_CONFIG_KEY "ConfigKey"
+  #define D_JSON_IRHVAC_CONFIG_VALUE "ConfigValue"
+  #define D_JSON_IRHVAC_SENSOR_TEMP "SensorTemp"
   #define D_JSON_IRHVAC_STATE_MODE "StateMode"
     #define D_JSON_IRHVAC_STATE_MODE_SEND_ONLY "SendOnly"
     #define D_JSON_IRHVAC_STATE_MODE_STORE_ONLY "StoreOnly"
     #define D_JSON_IRHVAC_STATE_MODE_SEND_STORE "SendStore"
+  #define D_JSON_IRHVAC_INCREMENTAL "Incremental"
 #define D_JSON_IRRECEIVED "IrReceived"
 
 // Commands xdrv_06_snfbridge.ino
@@ -739,6 +747,7 @@
 #define D_CMND_SHUTTER_SETTILT "Tilt"
 #define D_CMND_SHUTTER_TILTINCDEC "TiltChange"
 #define D_CMND_SHUTTER_MOTORSTOP "MotorStop"
+#define D_CMND_SHUTTER_SETUP "Setup"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
@@ -756,6 +765,7 @@
 // Commands xdrv_52_berry.ino - Berry scripting language
 #define D_PRFX_BR "Br"
 #define D_CMND_BR_RUN ""
+#define D_CMND_BR_RESTART "Restart"
 #define D_BR_NOT_STARTED  "Berry not started"
 
 // Commands xdrv_60_shift595.ino - 74x595 family shift register driver
@@ -933,6 +943,7 @@ const char HTTP_SNS_STANDARD_CONCENTRATION[] PROGMEM =        "{s}%s " D_STANDAR
 const char HTTP_SNS_ENVIRONMENTAL_CONCENTRATION[] PROGMEM =   "{s}%s " D_ENVIRONMENTAL_CONCENTRATION " %s " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";
 const char HTTP_SNS_F_ENVIRONMENTAL_CONCENTRATION[] PROGMEM = "{s}%s " D_ENVIRONMENTAL_CONCENTRATION " %s " D_UNIT_MICROMETER "{m}%1_f " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";
 const char HTTP_SNS_PARTICALS_BEYOND[] PROGMEM =              "{s}%s " D_PARTICALS_BEYOND            " %s " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER       "{e}";
+const char HTTP_SNS_AVG_RAD_DOSE[]     PROGMEM =              "{s}%s " D_AVG_RAD_DOSE                " %s " D_UNIT_MINUTE     "{m}%d.%02d " D_UNIT_US_H                  "{e}";
 
 const char HTTP_SNS_VOLTAGE[]             PROGMEM = "{s}" D_VOLTAGE                 "{m}%s " D_UNIT_VOLT          "{e}";
 const char HTTP_SNS_CURRENT[]             PROGMEM = "{s}" D_CURRENT                 "{m}%s " D_UNIT_AMPERE        "{e}";

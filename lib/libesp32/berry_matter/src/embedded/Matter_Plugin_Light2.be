@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matter
+
 # Matter plug-in for core behavior
 
 # dummy declaration for solidification
@@ -25,6 +27,8 @@ class Matter_Plugin_Light1 end
 #@ solidify:Matter_Plugin_Light2,weak
 
 class Matter_Plugin_Light2 : Matter_Plugin_Light1
+  static var TYPE = "light2"                                # name of the plug-in in json
+  static var NAME = "Light 2 CT"                            # display name of the plug-in
   static var CLUSTERS  = {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -41,8 +45,8 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
 
   #############################################################
   # Constructor
-  def init(device, endpoint)
-    super(self).init(device, endpoint)
+  def init(device, endpoint, arguments)
+    super(self).init(device, endpoint, arguments)
     self.shadow_ct = 325
     self.update_ct_minmax()
   end
@@ -55,9 +59,11 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
     self.update_ct_minmax()
     super(self).update_shadow()
     var light_status = light.get()
-    var ct = light_status.find('ct', nil)
-    if ct  == nil     ct = self.shadow_ct      end
-    if ct  != self.shadow_ct    self.attribute_updated(nil, 0x0300, 0x0007)   self.shadow_ct = ct   end
+    if light_status != nil
+      var ct = light_status.find('ct', nil)
+      if ct  == nil     ct = self.shadow_ct      end
+      if ct  != self.shadow_ct    self.attribute_updated(0x0300, 0x0007)   self.shadow_ct = ct   end
+    end
   end
 
   #############################################################
@@ -72,33 +78,33 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
-    import string
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
-      
+    
     # ====================================================================================================
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
+      self.update_shadow_lazy()
       if   attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
-        return TLV.create_TLV(TLV.U1, self.shadow_ct)
+        return tlv_solo.set(TLV.U1, self.shadow_ct)
       elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
-        return TLV.create_TLV(TLV.U1, 2)# 2 = ColorTemperatureMireds
+        return tlv_solo.set(TLV.U1, 2)# 2 = ColorTemperatureMireds
       elif attribute == 0x000F          #  ---------- Options / u1 ----------
-        return TLV.create_TLV(TLV.U1, 0)
+        return tlv_solo.set(TLV.U1, 0)
       elif attribute == 0x400B          #  ---------- ColorTempPhysicalMinMireds / u2 ----------
-        return TLV.create_TLV(TLV.U1, self.ct_min)
+        return tlv_solo.set(TLV.U1, self.ct_min)
       elif attribute == 0x400C          #  ---------- ColorTempPhysicalMaxMireds / u2 ----------
-        return TLV.create_TLV(TLV.U1, self.ct_max)
+        return tlv_solo.set(TLV.U1, self.ct_max)
       
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0x10)    # CT
+        return tlv_solo.set(TLV.U4, 0x10)    # CT
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 5)    # "new data model format and notation, FeatureMap support"
+        return tlv_solo.set(TLV.U4, 5)    # "new data model format and notation, FeatureMap support"
       end
         
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 
@@ -115,6 +121,7 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
 
     # ====================================================================================================
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
+      self.update_shadow_lazy()
       if   command == 0x000A            # ---------- MoveToColorTemperature ----------
         var ct_in = val.findsubval(0)  # CT
         if ct_in < self.ct_min  ct_in = self.ct_min   end

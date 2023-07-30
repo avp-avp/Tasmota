@@ -205,7 +205,7 @@
 #define USE_SPI
 #define USE_SDCARD
 
-#undef USE_I2C
+#define USE_I2C
 #undef USE_HOME_ASSISTANT
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 #undef USE_DOMOTICZ
@@ -288,6 +288,7 @@
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
+#define USE_MATTER_DEVICE
 #undef USE_DOMOTICZ
 #undef USE_HOME_ASSISTANT
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
@@ -306,6 +307,7 @@
 #define SHOW_SPLASH
 #define USE_XPT2046
 #define USE_FT5206
+#define USE_GT911
 #define USE_MPU_ACCEL
 #define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
   #define USE_BM8563
@@ -313,7 +315,7 @@
 #define USE_UNIVERSAL_DISPLAY
 #define USE_DISPLAY_LVGL_ONLY
 
-#undef USE_DISPLAY_MODES1TO5
+//#undef USE_DISPLAY_MODES1TO5
 #undef USE_DISPLAY_LCD
 #undef USE_DISPLAY_SSD1306
 #undef USE_DISPLAY_MATRIX
@@ -357,7 +359,7 @@
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #undef USE_MLX90614
 
-#define USE_SHT                                // [I2cDriver8] Enable SHT1X sensor (+1k4 code)
+//#define USE_SHT                                // [I2cDriver8] Enable SHT1X sensor (+1k4 code)
 #define USE_HTU                                // [I2cDriver9] Enable HTU21/SI7013/SI7020/SI7021 sensor (I2C address 0x40) (+1k5 code)
 #define USE_BMP                                // [I2cDriver10] Enable BMP085/BMP180/BMP280/BME280 sensors (I2C addresses 0x76 and 0x77) (+4k4 code)
 //  #define USE_BME68X                           // Enable support for BME680/BME688 sensor using Bosch BME68x library (+6k9 code)
@@ -374,6 +376,7 @@
 //#define USE_MGS                                // [I2cDriver17] Enable Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 //#define USE_SGP30                              // [I2cDriver18] Enable SGP30 sensor (I2C address 0x58) (+1k1 code)
 //#define USE_SGP40                              // [I2cDriver69] Enable SGP40 sensor (I2C address 0x59) (+1k4 code)
+//#define USE_SGP4X                              // [I2cDriver82] Enable SGP41 sensor (I2C address 0x59) (+7k2 code)
 //#define USE_SEN5X                              // [I2cDriver76] Enable SEN5X sensor (I2C address 0x69) (+3k code)
 //#define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
 //#define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
@@ -381,6 +384,7 @@
 //#define USE_MCP230xx                           // [I2cDriver22] Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
 #define USE_MCP23XXX_DRV                       // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 //#define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
+//#define USE_PCA9685_V2                         // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+3k4 code)
 //#define USE_MPR121                             // [I2cDriver23] Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //#define USE_CCS811                             // [I2cDriver24] Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
 //#define USE_CCS811_V2                          // [I2cDriver24] Enable CCS811 sensor (I2C addresses 0x5A and 0x5B) (+2k8 code)
@@ -436,6 +440,7 @@
 //#define USE_HYT                                // [I2CDriver68] Enable HYTxxx temperature and humidity sensor (I2C address 0x28) (+0k5 code)
 //#define USE_LUXV30B                            // [I2CDriver70] Enable RFRobot SEN0390 LuxV30b ambient light sensor (I2C address 0x4A) (+0k5 code)
 //#define USE_PMSA003I                           // [I2cDriver78] Enable PMSA003I Air Quality Sensor (I2C address 0x12) (+1k8 code)
+//#define USE_GDK101                             // [I2cDriver79] Enable GDK101 sensor (I2C addresses 0x18 - 0x1B) (+1k2 code)
 
 //#define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
 //  #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
@@ -555,6 +560,8 @@
   #define CODE_IMAGE_STR "tasmota32"
 #endif
 
+#define USE_MATTER_DEVICE
+
 #define USE_INFLUXDB                             // Enable influxdb support (+5k code)
 
 #define USE_ENHANCED_GUI_WIFI_SCAN
@@ -604,6 +611,7 @@
 #define USE_MGS                                // [I2cDriver17] Enable Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 #define USE_SGP30                              // [I2cDriver18] Enable SGP30 sensor (I2C address 0x58) (+1k1 code)
 #define USE_SGP40                              // [I2cDriver69] Enable SGP40 sensor (I2C address 0x59) (+1k4 code)
+#define USE_SGP4X                              // [I2cDriver82] Enable SGP41 sensor (I2C address 0x59) (+7k2 code)
 #define USE_SEN5X                              // [I2cDriver76] Enable SEN5X sensor (I2C address 0x69) (+3k code)
 //#define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
 #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
@@ -611,6 +619,7 @@
 //#define USE_MCP230xx                           // [I2cDriver22] Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
 #define USE_MCP23XXX_DRV                       // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 //#define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
+//#define USE_PCA9685_V2                         // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+3k4 code)
 //#define USE_MPR121                             // [I2cDriver23] Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //#define USE_CCS811                             // [I2cDriver24] Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
 #define USE_CCS811_V2                          // [I2cDriver24] Enable CCS811 sensor (I2C addresses 0x5A and 0x5B) (+2k8 code)
@@ -665,6 +674,7 @@
 //#define USE_HYT                                // [I2CDriver68] Enable HYTxxx temperature and humidity sensor (I2C address 0x28) (+0k5 code)
 //#define USE_LUXV30B                            // [I2CDriver70] Enable RFRobot SEN0390 LuxV30b ambient light sensor (I2C address 0x4A) (+0k5 code)
 //#define USE_PMSA003I                           // [I2cDriver78] Enable PMSA003I Air Quality Sensor (I2C address 0x12) (+1k8 code)
+//#define USE_GDK101                             // [I2cDriver79] Enable GDK101 sensor (I2C addresses 0x18 - 0x1B) (+1k2 code)
 
 //#define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
 //  #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
@@ -771,6 +781,32 @@
 #endif
 
 #endif // FIRMWARE_TASMOTA32
+
+/*********************************************************************************************\
+ * Post-process compile options for Matter
+\*********************************************************************************************/
+
+#ifdef USE_MATTER_DEVICE
+  #undef  USE_DISCOVERY
+  #define USE_DISCOVERY
+
+// Enable all the crypto required by Matter
+  #undef  USE_BERRY_CRYPTO_EC_P256
+  #define USE_BERRY_CRYPTO_EC_P256
+  #undef  USE_BERRY_CRYPTO_HMAC_SHA256
+  #define USE_BERRY_CRYPTO_HMAC_SHA256
+  #undef  USE_BERRY_CRYPTO_HKDF_SHA256
+  #define USE_BERRY_CRYPTO_HKDF_SHA256
+  #undef  USE_BERRY_CRYPTO_AES_CCM
+  #define USE_BERRY_CRYPTO_AES_CCM
+  #undef  USE_BERRY_CRYPTO_AES_CTR
+  #define USE_BERRY_CRYPTO_AES_CTR
+  #undef  USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+  #define USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+  #undef  USE_BERRY_CRYPTO_SPAKE2P_MATTER
+  #define USE_BERRY_CRYPTO_SPAKE2P_MATTER
+
+#endif // USE_MATTER_DEVICE
 
 #endif  // ESP32
 #endif  // _TASMOTA_CONFIGURATIONS_ESP32_H_

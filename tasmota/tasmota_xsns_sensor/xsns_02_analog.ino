@@ -317,6 +317,8 @@ uint16_t AdcRead(uint32_t pin, uint32_t factor) {
   // factor 3 = 8 samples
   // factor 4 = 16 samples
   // factor 5 = 32 samples
+  SystemBusyDelayExecute();
+
   uint32_t samples = 1 << factor;
   uint32_t analog = 0;
   for (uint32_t i = 0; i < samples; i++) {
@@ -837,7 +839,13 @@ void CmndAdcParam(void) {
       }
       char param3[FLOATSZ];
       dtostrfd(((double)Adc[idx].param3)/10000, precision, param3);
-      ResponseAppend_P(PSTR(",%s,%d"), param3, Adc[idx].param4);
+      if (ADC_CT_POWER == Adc[idx].type) {
+        char param4[FLOATSZ];
+        dtostrfd(((double)Adc[idx].param4)/10000, 3, param4);
+        ResponseAppend_P(PSTR(",%s,%s"), param3, param4);
+      } else {
+        ResponseAppend_P(PSTR(",%s,%d"), param3, Adc[idx].param4);
+      }
     }
     ResponseAppend_P(PSTR("]}"));
   }

@@ -58,6 +58,7 @@
 #define D_AS "as"
 #define D_AUTO "OTOMATIK"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Yeniden başlama sayısı"
@@ -104,6 +105,7 @@
 #define D_FALLBACK_TOPIC "Geri İletim Topiği"
 #define D_FALSE "False"
 #define D_FILE "Dosya"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Flow rate"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Frame rate"
@@ -802,6 +804,8 @@
 #define D_SENSOR_OUTPUT_LO     "Output Lo"
 #define D_SENSOR_AS608_TX      "AS608 Tx"
 #define D_SENSOR_AS608_RX      "AS608 Rx"
+#define D_SENSOR_GM861_TX      "GM861 Tx"
+#define D_SENSOR_GM861_RX      "GM861 Rx"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
 #define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
@@ -917,6 +921,7 @@
 #define D_GPIO_DINGTIAN_SDI    "Dingtian SDI"
 #define D_GPIO_DINGTIAN_Q7     "Dingtian Q7"
 #define D_GPIO_DINGTIAN_PL     "Dingtian PL"
+#define D_GPIO_DINGTIAN_OE     "Dingtian OE"
 #define D_GPIO_DINGTIAN_RCK    "Dingtian RCK"
 #define D_SENSOR_CM11_TX       "CM110x TX"
 #define D_SENSOR_CM11_RX       "CM110x RX"
@@ -1188,5 +1193,9 @@
 #define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "too low"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
+
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "ortalama radyasyon dozu"
+#define D_UNIT_US_H                       "µSv/h"
 
 #endif  // _LANGUAGE_TR_TR_H_

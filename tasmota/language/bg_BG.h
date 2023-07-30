@@ -58,6 +58,7 @@
 #define D_AS "като"
 #define D_AUTO "АВТОМАТИЧНО"
 #define D_BATT "Бат."                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Мигане вкл."
 #define D_BLINKOFF "Мигане изкл."
 #define D_BOOT_COUNT "Брой стартирания"
@@ -104,6 +105,7 @@
 #define D_FALLBACK_TOPIC "Резервна тема"
 #define D_FALSE "Невярно"
 #define D_FILE "Файл"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Дебит"
 #define D_FRAGMENTATION "фраг."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Кадъра в секунда"
@@ -802,6 +804,8 @@
 #define D_SENSOR_OUTPUT_LO     "Output Lo"
 #define D_SENSOR_AS608_TX      "AS608 Tx"
 #define D_SENSOR_AS608_RX      "AS608 Rx"
+#define D_SENSOR_GM861_TX      "GM861 Tx"
+#define D_SENSOR_GM861_RX      "GM861 Rx"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
 #define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
@@ -917,6 +921,7 @@
 #define D_GPIO_DINGTIAN_SDI    "Dingtian SDI"
 #define D_GPIO_DINGTIAN_Q7     "Dingtian Q7"
 #define D_GPIO_DINGTIAN_PL     "Dingtian PL"
+#define D_GPIO_DINGTIAN_OE     "Dingtian OE"
 #define D_GPIO_DINGTIAN_RCK    "Dingtian RCK"
 #define D_SENSOR_CM11_TX       "CM110x TX"
 #define D_SENSOR_CM11_RX       "CM110x RX"
@@ -1188,5 +1193,9 @@
 #define D_NEOPOOL_PH_HIGH                 "твърде високо"      // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "твърде ниско"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "превишено време за помпане"
+
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "средна доза радиация"
+#define D_UNIT_US_H                       "µSv/h"
 
 #endif  // _LANGUAGE_BG_BG_H_
