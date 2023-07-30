@@ -432,6 +432,9 @@ size_t TasmotaSerial::write(uint8_t b) {
   if (m_hardserial) {
 #ifdef ESP8266
     size = Serial.write(b);
+    if (m_tx_enable_valid) {
+      Serial.flush();
+    }
 #endif  // ESP8266
 #ifdef ESP32
     size = TSerial->write(b);
