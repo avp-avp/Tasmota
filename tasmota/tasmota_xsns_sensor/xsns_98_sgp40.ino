@@ -1,7 +1,7 @@
 /*
   xsns_98_sgp40.ino - SGP40 gas and air quality sensor support for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2022  Jean-Pierre Deschamps
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -103,8 +103,6 @@ const char HTTP_SNS_SGP40[] PROGMEM =
   "{s}SGP40 " D_AIR_QUALITY "{m}%d " "{e}";
 const char HTTP_SNS_AHUM40[] PROGMEM = "{s}SGP40 Abs Humidity{m}%s g/m3{e}";
 #endif
-
-#define D_JSON_AHUM "aHumidity"
 
 void Sgp40Show(bool json)
 {

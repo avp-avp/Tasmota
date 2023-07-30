@@ -39,7 +39,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)    - SetOption12  - (Settings) Switch between dynamic (0) or fixed (1) slot flash save location
     uint32_t button_single : 1;            // bit 13 (v5.4.0)    - SetOption13  - (Button) Support only single press (1) to speed up button press recognition
     uint32_t interlock : 1;                // bit 14 (v5.6.0)    - CMND_INTERLOCK - Enable (1) /disable (0) interlock
-    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)    - SetOption15  - (Light) Switch between commands PWM (1) or COLOR/DIMMER/CT/CHANNEL (0)
+    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)    - SetOption15  - (Light) Switch between commands PWM (0) or COLOR/DIMMER/CT/CHANNEL (1)
     uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)    - SetOption16  - (WS2812) Switch between clockwise (0) or counter-clockwise (1)
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)    - SetOption17  - (Light) Switch between decimal (1) or hexadecimal (0) output
     uint32_t light_signal : 1;             // bit 18 (v5.10.0c)  - SetOption18  - (Light) Pair light signal (1) with CO2 sensor
@@ -182,13 +182,13 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t use_esp32_temperature : 1;    // bit 0  (v12.1.1.1) - SetOption146 - (ESP32) Show ESP32 internal temperature sensor
     uint32_t mqtt_disable_sserialrec : 1;  // bit 1  (v12.1.1.2) - SetOption147 - (MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead.
     uint32_t artnet_autorun : 1;           // bit 2  (v12.2.0.4) - SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
-    uint32_t spare03 : 1;                  // bit 3
-    uint32_t spare04 : 1;                  // bit 4
-    uint32_t spare05 : 1;                  // bit 5
-    uint32_t spare06 : 1;                  // bit 6
-    uint32_t spare07 : 1;                  // bit 7
-    uint32_t spare08 : 1;                  // bit 8
-    uint32_t spare09 : 1;                  // bit 9
+    uint32_t dns_ipv6_priority : 1;        // bit 3  (v12.2.0.6) - SetOption149 - (Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`
+    uint32_t no_voltage_common : 1;        // bit 4  (v12.3.1.5) - SetOption150 - (Energy) Force no voltage/frequency common
+    uint32_t matter_enabled : 1;           // bit 5  (v12.3.1.5) - SetOption151 - (Matter) Enable Matter protocol over Wifi
+    uint32_t bistable_single_pin : 1;      // bit 6  (v12.5.0.1) - SetOption152 - (Power) Switch between two (0) or one (1) pin bistable relay control
+    uint32_t berry_no_autoexec : 1;        // bit 7  (v12.5.0.3) - SetOption153 - (Berry) Disable autoexec.be on restart (1)
+    uint32_t berry_light_scheme : 1;       // bit 8  (v12.5.0.3) - SetOption154 - (Berry) Handle berry led using RMT0 as additional WS2812 scheme
+    uint32_t zcfallingedge : 1;            // bit 9  (v13.0.0.1) - SetOption155 - (ZCDimmer) Enable rare falling Edge dimmer instead of leading edge
     uint32_t spare10 : 1;                  // bit 10
     uint32_t spare11 : 1;                  // bit 11
     uint32_t spare12 : 1;                  // bit 12
@@ -266,8 +266,7 @@ typedef union {
     uint32_t spare23 : 1;                  // bit 23
     uint32_t spare24 : 1;                  // bit 24
     uint32_t spare25 : 1;                  // bit 25
-    uint32_t spare26 : 1;                  // bit 26
-    uint32_t spare27 : 1;                  // bit 27
+    uint32_t tariff_forced : 2;            // bit 26..27 (v12.4.0.2) - Energy forced tariff : 0=tariff change on time, 1|2=tariff forced
     uint32_t sunrise_dawn_angle : 2;       // bits 28/29 (v12.1.1.4) -
     uint32_t temperature_set_res : 2;      // bits 30/31 (v9.3.1.4) - (Tuya)
   };
@@ -453,7 +452,10 @@ typedef union {
   uint32_t raw_send : 1;               // Enable sending also real time raw data over MQTT
   uint32_t raw_limit : 1;              // Limit raw data to minimal relevant fields (the ones moving quickly)
   uint32_t mode_standard : 1;          // Set Linky Standard Mode (9600 bps stream) else legacy (1200 bps)
-  uint32_t spare4_1 : 4;               // Keep some spares for future uses
+  uint32_t show_stats : 1;             // Display frames stats informations on WEB interface
+  uint32_t spare1_1 : 1;               // Keep some spares for future uses
+  uint32_t spare1_2 : 1;               // Keep some spares for future uses
+  uint32_t spare1_3 : 1;               // Keep some spares for future uses
   uint32_t spare8_1 : 8;               // Keep some spares for future uses
   uint32_t spare8_2 : 8;               // Keep some spares for future uses
   };
@@ -730,8 +732,9 @@ typedef struct {
 #endif  // ESP32
   uint16_t      artnet_universe;           // 734
   uint16_t      modbus_sbaudrate;          // 736
-
-  uint8_t       free_esp32_738[5];         // 738
+  uint16_t      shutter_motorstop;         // 738
+  uint8_t       battery_level_percent;     // 73A
+  uint8_t       free_73B[2];               // 73B
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
@@ -775,8 +778,9 @@ typedef struct {
   int8_t        temp_comp;                 // E9E
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
+  uint16_t      zcdimmerset[5];            // EA6
 
-  uint8_t       free_ea6[32];              // EA6
+  uint8_t       free_eb0[22];              // EB0  22 bytes
 
   uint8_t       shift595_device_count;     // EC6
   uint8_t       sta_config;                // EC7

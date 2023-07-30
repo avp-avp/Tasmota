@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 27.11.2022
+ * Updated until v9.4.0.1 - Last update 23.07.2023
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -51,12 +51,14 @@
 #define D_DECIMAL_SEPARATOR "."
 
 // Common
+#define D_ABSOLUTE_HUMIDITY    "Umidità ass"
 #define D_ADMIN                "Admin"
 #define D_AIR_QUALITY          "Qualità dell'aria"
 #define D_AP                   "AP"                   // Access Point
 #define D_AS                   "come"
 #define D_AUTO                 "AUTO"
 #define D_BATT                 "Batt"                 // Short for Battery
+#define D_BATTERY_CHARGE       "Carica"               // Battery charge in %
 #define D_BLINK                "Lampeggia"
 #define D_BLINKOFF             "Lampeggia OFF"
 #define D_BOOT_COUNT           "Numero boot"
@@ -103,6 +105,7 @@
 #define D_FALLBACK_TOPIC       "Topic Riserva"
 #define D_FALSE                "Falso"
 #define D_FILE                 "File"
+#define D_FILE_SYSTEM_SIZE     "Dimensione file system"
 #define D_FLOW_RATE            "Flusso dati"
 #define D_FRAGMENTATION        "framm."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE           "Frequenza fotogrammi"
@@ -133,6 +136,7 @@
 #define D_MULTI_PRESS          "multi-pressione"
 #define D_NOISE                "Rumore"
 #define D_NONE                 "Nessuno"
+#define D_NOX                  "NOx"
 #define D_O2                   "Ossigeno"
 #define D_OFF                  "OFF"
 #define D_OFFLINE              "Offline"
@@ -201,6 +205,7 @@
 #define D_UV_LEVEL             "Livello UV"
 #define D_UV_POWER             "Intensità UV"
 #define D_VERSION              "Versione"
+#define D_VOC                  "VOC"
 #define D_VOLTAGE              "Tensione"
 #define D_VOLUME               "Volume"
 #define D_WEIGHT               "Peso"
@@ -691,12 +696,12 @@
 #define D_SENSOR_SBR_TX                 "SerBr - TX"
 #define D_SENSOR_MBR_TX                 "ModBr - TX"
 #define D_SENSOR_MBR_RX                 "ModBr - RX"
-#define D_SENSOR_MBR_TX_ENA             "ModBr - TX ENA"
+#define D_SENSOR_MBR_TX_ENA             "ModBr - TX ON"
 #define D_SENSOR_SR04_TRIG              "SR04 Tri - TX"
 #define D_SENSOR_SR04_ECHO              "SR04 Ech - RX"
 #define D_SENSOR_NRG_MBS_TX             "NrgMbs - TX"
 #define D_SENSOR_NRG_MBS_RX             "NrgMbs - RX"
-#define D_SENSOR_NRG_MBS_TX_ENA         "NrgMbs - TX ENA"
+#define D_SENSOR_NRG_MBS_TX_ENA         "NrgMbs - TX ON"
 #define D_SENSOR_SDM72_TX               "SDM72 - TX"
 #define D_SENSOR_SDM72_RX               "SDM72 - RX"
 #define D_SENSOR_SDM120_TX              "SDMx20 - TX"
@@ -797,6 +802,8 @@
 #define D_SENSOR_OUTPUT_LO              "Uscita - Lo"
 #define D_SENSOR_AS608_TX               "AS608 - TX"
 #define D_SENSOR_AS608_RX               "AS608 - RX"
+#define D_SENSOR_GM861_TX               "GM861 - TX"
+#define D_SENSOR_GM861_RX               "GM861 - RX"
 #define D_SENSOR_DDS2382_TX             "DDS238-2 - TX"
 #define D_SENSOR_DDS2382_RX             "DDS238-2 - RX"
 #define D_SENSOR_DDSU666_TX             "DDSU666 - TX"
@@ -895,6 +902,9 @@
 #define D_SENSOR_ZEROCROSS              "Impulsi ZC"
 #define D_SENSOR_HALLEFFECT             "Effetto hall"
 #define D_SENSOR_EPD_DATA               "EPD - Dati"
+#define D_SENSOR_PCF8574_INT            "PCF8574 - Int"
+#define D_SENSOR_MCP23XXX_INT           "MCP23xxx - Int"
+#define D_SENSOR_MCP23SXX_CS            "MCP23Sxx - CS"
 #define D_SENSOR_MCP2515_CS             "MCP2515 - CS"
 #define D_SENSOR_HRG15_RX               "HRG15 - RX"
 #define D_SENSOR_HRG15_TX               "HRG15 - TX"
@@ -911,10 +921,19 @@
 #define D_GPIO_DINGTIAN_SDI             "Dingtian - SDI"
 #define D_GPIO_DINGTIAN_Q7              "Dingtian - Q7"
 #define D_GPIO_DINGTIAN_PL              "Dingtian - PL"
+#define D_GPIO_DINGTIAN_OE              "Dingtian - OE"
 #define D_GPIO_DINGTIAN_RCK             "Dingtian - RCK"
 #define D_SENSOR_CM11_TX                "CM110x - TX"
 #define D_SENSOR_CM11_RX                "CM110x - RX"
 #define D_SENSOR_FLOWRATEMETER          "Portata"
+#define D_SENSOR_ME007_TRIG             "ME007 - Tri"
+#define D_SENSOR_ME007_RX               "ME007 - RX"
+#define D_SENSOR_TUYAMCUBR_TX           "TuyaMCUBr - TX"
+#define D_SENSOR_TUYAMCUBR_RX           "TuyaMCUBr - RX"
+#define D_SENSOR_BIOPDU_PZEM0XX_TX      "BioPDU PZEM0XX - TX"
+#define D_SENSOR_BIOPDU_PZEM016_RX      "BioPDU PZEM016 - RX"
+#define D_SENSOR_BIOPDU_BIT             "BioPDU Bit"
+#define D_SENSOR_LOX_O2_RX              "LoxO2 - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -927,6 +946,7 @@
 #define D_UNIT_HOUR                       "o"
 #define D_UNIT_GALLONS                    "gal"
 #define D_UNIT_GALLONS_PER_MIN            "g/m"
+#define D_UNIT_GRAM_PER_CUBIC_METER       "g/m³"
 #define D_UNIT_INCH_MERCURY               "inHg"
 #define D_UNIT_INCREMENTS                 "inc"
 #define D_UNIT_KELVIN                     "K"
@@ -1173,5 +1193,9 @@
 #define D_NEOPOOL_PH_HIGH                 "troppo alto"       // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "troppo basso"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tempo pompa superato"
+
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "Dose media radiazioni"
+#define D_UNIT_US_H                       "µSv/h"
 
 #endif  // _LANGUAGE_IT_IT_H_

@@ -51,12 +51,14 @@
 #define D_DECIMAL_SEPARATOR ","
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Qualitat Aire"
 #define D_AP "PA"                    // Access Point
 #define D_AS "com"
 #define D_AUTO "AUTO"
 #define D_BATT "Bat"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"  // Battery charge in %
 #define D_BLINK "Espurna"
 #define D_BLINKOFF "Espurna Fora"
 #define D_BOOT_COUNT "Compte Arrencs"
@@ -103,6 +105,7 @@
 #define D_FALLBACK_TOPIC "Tema de recuperació"
 #define D_FALSE "Fals"
 #define D_FILE "Arxiu"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Cabal"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Frame rate"
@@ -133,6 +136,7 @@
 #define D_MULTI_PRESS "multi-pressió"
 #define D_NOISE "Soroll"
 #define D_NONE "Cap"
+#define D_NOX "NOx"
 #define D_O2 "Oxygen"
 #define D_OFF "Apagat"
 #define D_OFFLINE "Desconnectat"
@@ -201,6 +205,7 @@
 #define D_UV_LEVEL "Nivell UV"
 #define D_UV_POWER "Potència UV"
 #define D_VERSION "Versió"
+#define D_VOC "VOC"
 #define D_VOLTAGE "Tensió"
 #define D_VOLUME "Volum"
 #define D_WEIGHT "Pes"
@@ -799,6 +804,8 @@
 #define D_SENSOR_OUTPUT_LO     "Sortida baixa"
 #define D_SENSOR_AS608_TX      "AS608 Tx"
 #define D_SENSOR_AS608_RX      "AS608 Rx"
+#define D_SENSOR_GM861_TX      "GM861 Tx"
+#define D_SENSOR_GM861_RX      "GM861 Rx"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
 #define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
@@ -895,6 +902,9 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_PCF8574_INT   "PCF8574 Int"
+#define D_SENSOR_MCP23XXX_INT  "MCP23xxx Int"
+#define D_SENSOR_MCP23SXX_CS   "MCP23Sxx CS"
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
 #define D_SENSOR_HRG15_RX      "HRG15 Rx"
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
@@ -911,10 +921,19 @@
 #define D_GPIO_DINGTIAN_SDI    "Dingtian SDI"
 #define D_GPIO_DINGTIAN_Q7     "Dingtian Q7"
 #define D_GPIO_DINGTIAN_PL     "Dingtian PL"
+#define D_GPIO_DINGTIAN_OE     "Dingtian OE"
 #define D_GPIO_DINGTIAN_RCK    "Dingtian RCK"
 #define D_SENSOR_CM11_TX       "CM110x TX"
 #define D_SENSOR_CM11_RX       "CM110x RX"
 #define D_SENSOR_FLOWRATEMETER "Cabal"
+#define D_SENSOR_ME007_TRIG    "ME007 Tri"
+#define D_SENSOR_ME007_RX      "ME007 Rx"
+#define D_SENSOR_TUYAMCUBR_TX  "TuyaMCUBr Tx"
+#define D_SENSOR_TUYAMCUBR_RX  "TuyaMCUBr Rx"
+#define D_SENSOR_BIOPDU_PZEM0XX_TX "BioPDU PZEM0XX Tx"
+#define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
+#define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
+#define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -927,6 +946,7 @@
 #define D_UNIT_HOUR "h"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KELVIN "K"
@@ -1173,5 +1193,9 @@
 #define D_NEOPOOL_PH_HIGH                 "massa alt"          // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "massa baix"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "temps de bomba excedit"
+
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "dosi mitjana de radiació"
+#define D_UNIT_US_H                       "µSv/h"
 
 #endif  // _LANGUAGE_CA_AD_H_

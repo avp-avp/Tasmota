@@ -50,6 +50,7 @@ be_extern_native_module(partition_core);
 be_extern_native_module(crc);
 be_extern_native_module(crypto);
 be_extern_native_module(ULP);
+be_extern_native_module(TFL);
 be_extern_native_module(mdns);
 #ifdef USE_ZIGBEE
 be_extern_native_module(zigbee);
@@ -65,13 +66,16 @@ be_extern_native_module(lv_tasmota);
 be_extern_native_module(haspmota);
 #endif // USE_LVGL_HASPMOTA
 #endif // USE_LVGL
+#ifdef USE_MATTER_DEVICE
+be_extern_native_module(matter);
+#endif // USE_MATTER_DEVICE
 
 /* user-defined modules declare start */
 
 /* user-defined modules declare end */
 
 /* module list declaration */
-BERRY_LOCAL const bntvmodule* const be_module_table[] = {
+BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 /* default modules register */
 #if BE_USE_STRING_MODULE
     &be_native_module(string),
@@ -168,6 +172,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #if defined(USE_BERRY_ULP) && ((CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3))
     &be_native_module(ULP),
 #endif // USE_BERRY_ULP
+#if defined(USE_BERRY_TF_LITE)
+    &be_native_module(TFL),
+#endif //USE_BERRY_TF_LITE
 #if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
     &be_native_module(MI32),
     &be_native_module(BLE),
@@ -175,6 +182,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef USE_DISCOVERY
     &be_native_module(mdns),
 #endif // USE_DISCOVERY
+#ifdef USE_MATTER_DEVICE
+    &be_native_module(matter),
+#endif // USE_MATTER_DEVICE
 #endif // TASMOTA
     /* user-defined modules register end */
     NULL /* do not remove */
@@ -210,6 +220,7 @@ be_extern_native_class(md5);
 be_extern_native_class(udp);
 be_extern_native_class(webclient);
 be_extern_native_class(tcpclient);
+be_extern_native_class(tcpclientasync);
 be_extern_native_class(tcpserver);
 be_extern_native_class(energy_struct);
 // LVGL core classes
@@ -257,6 +268,7 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(udp),
     &be_native_class(webclient),
     &be_native_class(tcpclient),
+    &be_native_class(tcpclientasync),
 #endif // USE_WEBCLIENT
 #ifdef USE_BERRY_TCPSERVER
     &be_native_class(tcpserver),
@@ -295,7 +307,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #endif // USE_UFILESYS
     &be_native_class(AudioOpusDecoder),
 #endif // USE_I2S_AUDIO_BERRY
-#ifdef USE_BERRY_INT64
+#if defined(USE_BERRY_INT64) || defined(USE_MATTER_DEVICE)
     &be_native_class(int64),
 #endif
 #endif // TASMOTA
