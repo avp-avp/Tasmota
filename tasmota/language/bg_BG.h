@@ -57,6 +57,7 @@
 #define D_AP "Точка за достъп"       // Access Point
 #define D_AS "като"
 #define D_AUTO "АВТОМАТИЧНО"
+#define D_BATTERY "Battery"
 #define D_BATT "Бат."                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Мигане вкл."
@@ -75,6 +76,7 @@
 #define D_COMMAND "Команда"
 #define D_CONNECTED "Свързан"
 #define D_CORS_DOMAIN "Домейн на CORS"
+#define D_COLOR "Color"
 #define D_COUNT "Брой"
 #define D_COUNTER "Брояч"
 #define D_CT_POWER "ТТ Мощност"
@@ -118,6 +120,7 @@
 #define D_GROUP "Група"
 #define D_HOST "Хост"
 #define D_HALL_EFFECT "Ефект на Хол"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Име на хоста"
 #define D_HUMIDITY "Влажност"
 #define D_ILLUMINANCE "Осветеност"
@@ -166,7 +169,6 @@
 #define D_RESTART "Рестартиране"
 #define D_RESTARTING "Рестартиране"
 #define D_RESTART_REASON "Причина за рестарт"
-#define D_RESTORE "възстановяване"
 #define D_RETAINED "запазено"
 #define D_RULE "Правило"
 #define D_SAVE "Запазване"
@@ -192,7 +194,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "Обновяване"
 #define D_UPLOAD "Качването е"
 #define D_UPTIME "Време на работа"
 #define D_USED "използвано"
@@ -277,6 +278,7 @@
 #define D_INFORMATION "Информация"
 #define D_FIRMWARE_UPGRADE "Обновяване на софтуера"
 #define D_MANAGEMENT "Терминали"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Терминал"
 #define D_CONFIRM_RESTART "Потвърдете рестартиране"
 
@@ -290,6 +292,7 @@
 #define D_RESET_CONFIGURATION "Нулиране на настройки"
 #define D_BACKUP_CONFIGURATION "Резервно копие на настройки"
 #define D_RESTORE_CONFIGURATION "Възстановяване на настройки"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Начало"
 
 #define D_MODULE_PARAMETERS "Параметри на модула"
@@ -534,6 +537,11 @@
 #define D_ENERGY_YESTERDAY "Консумация за вчера"
 #define D_ENERGY_TOTAL "Консумирано общо"
 
+// xsns_100_ina3221.ino
+#define  D_UNIT_CHARGE                    "Ah"
+#define  D_CHARGE                         "Charge"    
+#define  D_ENERGY                         "Energy"
+
 // xdrv_27_shutter.ino
 #define D_OPEN "Отворена"
 #define D_CLOSE "Затворена"
@@ -546,6 +554,31 @@
 #define D_DEVICE "Устройство"
 #define D_DEVICE_INPUT "Вход"
 #define D_DEVICE_OUTPUT "Изход"
+
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_VALVE_POSITION   "Valve Position"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+
+// xdrv_79_esp32_ble.ino
+#define D_CONFIGURE_BLE "Configure BLE"
+#define D_BLE_PARAMETERS "Bluetooth Settings"
+#define D_MQTT_BLE_ENABLE "Enable Bluetooth"
+#define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
+#define D_BLE_DEVICES "Devices Seen"
+#define D_BLE_REMARK "items marked (*) are not stored in config"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Датчикът DS18x20 е зает"
@@ -639,6 +672,24 @@
 #define D_SIGNALSTRENGTH "Сила на сигнала"
 #define D_CHIPTEMPERATURE "Температура на чипа"
 
+// xsns_60_GPS
+#define D_LATITUDE             "Latitude"
+#define D_LONGITUDE            "Longitude"
+#define D_HORIZONTAL_ACCURACY  "Horizontal Accuracy"
+#define D_ALTITUDE             "Altitude"
+#define D_VERTICAL_ACCURACY    "Vertical Accuracy"
+#define D_SPEED                "Speed"
+#define D_SPEED_ACCURACY       "Speed Accuracy"
+#define D_HEADING              "Heading"
+#define D_HEADING_ACCURACY     "Heading Accuracy"
+#define D_SAT_FIX              "Satellite Fix"
+  #define D_SAT_FIX_NO_FIX     "None"
+  #define D_SAT_FIX_DEAD_RECK  "Dead reckoning"
+  #define D_SAT_FIX_2D         "2D"
+  #define D_SAT_FIX_3D         "3D"
+  #define D_SAT_FIX_GPS_DEAD   "GPS and dead reckoning"
+  #define D_SAT_FIX_TIME       "Time only fix"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Няма"
 #define D_SENSOR_USER          "Потребителско"
@@ -687,6 +738,10 @@
 #define D_SENSOR_SPI_MISO      "SPI MISO"
 #define D_SENSOR_SPI_MOSI      "SPI MOSI"
 #define D_SENSOR_SPI_CLK       "SPI CLK"
+#define D_SENSOR_SDIO_CMD      "SDIO CMD"
+#define D_GPIO_TS_SPI_CS       "TS SPI CS"
+#define D_GPIO_TS_RST          "TS RST"
+#define D_GPIO_TS_IRQ          "TS IRQ"
 #define D_SENSOR_SDIO_CMD      "SDIO CMD"
 #define D_SENSOR_SDIO_CLK      "SDIO CLK"
 #define D_SENSOR_SDIO_D0       "SDIO D0"
@@ -758,6 +813,15 @@
 #define D_SENSOR_MAX31855_CLK  "MX31855 CLK"
 #define D_SENSOR_MAX31855_DO   "MX31855 DO"
 #define D_SENSOR_MAX31865_CS   "MX31865 CS"
+#define D_GPIO_RN2XX3_TX       "RN2XX3 Tx"
+#define D_GPIO_RN2XX3_RX       "RN2XX3 Rx"
+#define D_GPIO_RN2XX3_RST      "RN2XX3 Rst"
+#define D_GPIO_ASR650X_TX      "ASR650x Tx"
+#define D_GPIO_ASR650X_RX      "ASR650x Rx"
+#define D_GPIO_LORA_CS         "LoRa CS"
+#define D_GPIO_LORA_RST        "LoRa Rst"
+#define D_GPIO_LORA_BUSY       "LoRa Busy"
+#define D_GPIO_LORA_DI         "LoRa DIO"    // Suffix "0","1","2"
 #define D_SENSOR_NRG_SEL       "HLWBL SEL"  // Suffix "i"
 #define D_SENSOR_NRG_CF1       "HLWBL CF1"
 #define D_SENSOR_HLW_CF        "HLW8012 CF"
@@ -769,6 +833,7 @@
 #define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_BL0906_RX     "BL0906 Rx"
 #define D_SENSOR_BL0939_RX     "BL0939 Rx"
 #define D_SENSOR_BL0942_RX     "BL0942 Rx"
 #define D_SENSOR_HM330X_SET    "HM330X SET"
@@ -857,6 +922,8 @@
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_SENSOR_ADC_PH        "ADC pH"
 #define D_SENSOR_ADC_MQ        "ADC MQ"
+#define D_SENSOR_ADC_VOLTAGE   "ADC Voltage"
+#define D_SENSOR_ADC_CURRENT   "ADC Current"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -873,6 +940,7 @@
 #define D_SENSOR_ETH_PHY_MDC   "ETH MDC"
 #define D_SENSOR_ETH_PHY_MDIO  "ETH MDIO"
 #define D_SENSOR_TCP_TXD       "TCP Tx"
+#define D_SENSOR_TCP_TXD_EN    "TCP Tx En"
 #define D_SENSOR_TCP_RXD       "TCP Rx"
 #define D_SENSOR_IEM3000_TX    "iEM3000 TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
@@ -942,6 +1010,8 @@
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
+#define D_GPIO_MAGIC_SWITCH    "MagicSwitch"
+#define D_SENSOR_WOOLIIS_RX    "Wooliis Rx"
 
 // Units
 #define D_UNIT_AMPERE "А"
@@ -966,6 +1036,7 @@
 #define D_UNIT_LITERS "л"
 #define D_UNIT_LITERS_PER_MIN "л/м"
 #define D_UNIT_LUX "лукс"
+#define D_UNIT_METER "m"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "µг/м³"
 #define D_UNIT_MICROMETER "µм"
 #define D_UNIT_MICROSECOND "µс"
@@ -1205,5 +1276,15 @@
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "средна доза радиация"
 #define D_UNIT_US_H                       "µSv/h"
+
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
+// xsns_115_wooliis.ino
+#define D_IMPORT                          "Import"
+#define D_EXPORT                          "Export"
+#define D_CHARGING                        "Charging"
+#define D_CAPACITY                        "Capacity"
 
 #endif  // _LANGUAGE_BG_BG_H_

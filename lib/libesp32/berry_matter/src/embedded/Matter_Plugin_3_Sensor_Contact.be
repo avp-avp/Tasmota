@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Contact.be - implements the behavior for a Contact Sensor
+# Matter_Plugin_3_Sensor_Contact.be - implements the behavior for a Contact Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -23,58 +23,30 @@ import matter
 
 #@ solidify:Matter_Plugin_Sensor_Contact,weak
 
-class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
+class Matter_Plugin_Sensor_Contact : Matter_Plugin_Sensor_Boolean
   static var TYPE = "contact"                       # name of the plug-in in json
   static var DISPLAY_NAME = "Contact"                       # display name of the plug-in
-  static var ARG  = "switch"                        # additional argument name (or empty if none)
-  static var ARG_HINT = "Switch<x> number"
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var UPDATE_TIME = 750                      # update every 750ms
+  # static var ARG  = "switch"                        # additional argument name (or empty if none)
+  # static var ARG_HINT = "Switch<x> number"
+  # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+  # static var UPDATE_TIME = 750                      # update every 750ms
+  static var JSON_NAME = "Contact"                  # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Contact")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0045: [0,0xFFFC,0xFFFD],                      # Boolean State p.70 - no writable
+    0x0045: [0],                                    # Boolean State p.70 - no writable
   })
   static var TYPES = { 0x0015: 1 }                  # Contact Sensor, rev 1
 
-  var tasmota_switch_index                          # Switch number in Tasmota (one based)
-  var shadow_contact
+  # var tasmota_switch_index                          # Switch number in Tasmota (one based)
+  # var shadow_bool_value
 
   #############################################################
-  # Constructor
-  def init(device, endpoint, config)
-    super(self).init(device, endpoint, config)
-    self.shadow_contact = false
-  end
-
-  #############################################################
-  # parse_configuration
+  # value_updated
   #
-  # Parse configuration map
-  def parse_configuration(config)
-    self.tasmota_switch_index = int(config.find(self.ARG #-'switch'-#, 1))
-    if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
-  end
-
-  #############################################################
-  # Update shadow
-  #
-  def update_shadow()
-    super(self).update_shadow()
-
-    import json
-    var ret = tasmota.cmd("Status 8", true)
-    if ret != nil
-      var j = json.load(ret)
-      if j != nil
-        var state = false
-        state = (j.find("Switch" + str(self.tasmota_switch_index)) == "ON")
-
-        if self.shadow_contact != state
-          self.attribute_updated(0x0045, 0x0000)
-          self.shadow_contact = state
-        end
-      end
-    end
+  # This is triggered when a new value is changed, for subscription
+  # This method is meant to be overloaded and maximize shared code
+  def value_updated()
+    self.attribute_updated(0x0045, 0x0000)
   end
 
   #############################################################
@@ -88,46 +60,36 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x0045              # ========== Boolean State ==========
       if   attribute == 0x0000          #  ---------- StateValue / bool ----------
-        if self.shadow_contact != nil
-          return tlv_solo.set(TLV.BOOL, self.shadow_contact)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 1)    # 1 = Initial release
+        return tlv_solo.set_or_nil(TLV.BOOL, self.shadow_bool_value)
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################
-  # update_virtual
-  #
-  # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    var val_onoff = payload_json.find("Contact")
-    if val_onoff != nil
-      val_onoff = bool(val_onoff)
-      if self.shadow_contact != val_onoff
-        self.attribute_updated(0x0045, 0x0000)
-        self.shadow_contact = val_onoff
-      end
-    end
-    super(self).update_virtual(payload_json)
-  end
-
+  # For Bridge devices
   #############################################################
-  # append_state_json
+  #############################################################
+  # web_values
   #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json()
-    return f',"Contact":{int(self.shadow_contact)}'
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("Contact%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_bool_value)))
   end
 
+  # Show prefix before web value
+  def web_values_prefix()
+    import webserver
+    var name = self.get_name()
+    if !name
+      name = "Switch" + str(self.tasmota_switch_index)
+    end
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+  end
+  #############################################################
+  #############################################################
 end
 matter.Plugin_Sensor_Contact = Matter_Plugin_Sensor_Contact

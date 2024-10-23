@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Occupancy.be - implements the behavior for a Occupany Switch
+# Matter_Plugin_3_Sensor_Occupancy.be - implements the behavior for a Occupany Switch
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -23,55 +23,30 @@ import matter
 
 #@ solidify:Matter_Plugin_Sensor_Occupancy,weak
 
-class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
+class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Sensor_Boolean
   static var TYPE = "occupancy"                     # name of the plug-in in json
   static var DISPLAY_NAME = "Occupancy"                     # display name of the plug-in
-  static var ARG  = "switch"                        # additional argument name (or empty if none)
-  static var ARG_HINT = "Switch<x> number"
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var UPDATE_TIME = 750                      # update every 750ms
+  # static var ARG  = "switch"                        # additional argument name (or empty if none)
+  # static var ARG_HINT = "Switch<x> number"
+  # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+  # static var UPDATE_TIME = 750                      # update every 750ms
+  static var JSON_NAME = "Occupancy"                # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Occupancy")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0406: [0,1,2,0xFFFC,0xFFFD],                  # Occupancy Sensing p.105 - no writable
+    0x0406: [0,1,2],                                # Occupancy Sensing p.105 - no writable
   })
   static var TYPES = { 0x0107: 2 }                  # Occupancy Sensor, rev 2
 
-  var tasmota_switch_index                          # Switch number in Tasmota (one based)
-  var shadow_occupancy
+  # var tasmota_switch_index                          # Switch number in Tasmota (one based)
+  # var shadow_bool_value
 
   #############################################################
-  # Constructor
-  def init(device, endpoint, config)
-    super(self).init(device, endpoint, config)
-    self.shadow_occupancy = false
-  end
-
-  #############################################################
-  # parse_configuration
+  # value_updated
   #
-  # Parse configuration map
-  def parse_configuration(config)
-    self.tasmota_switch_index = int(config.find(self.ARG #-'relay'-#, 1))
-    if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
-  end
-
-  #############################################################
-  # Update shadow
-  #
-  def update_shadow()
-    super(self).update_shadow()
-    var switch_str = "Switch" + str(self.tasmota_switch_index)
-
-    var j = tasmota.cmd("Status 8", true)
-    if j != nil   j = j.find("StatusSNS") end
-    if j != nil && j.contains(switch_str)
-      var state = (j.find(switch_str) == "ON")
-
-      if (self.shadow_occupancy != state)
-        self.attribute_updated(0x0406, 0x0000)
-      end
-      self.shadow_occupancy = state
-    end
+  # This is triggered when a new value is changed, for subscription
+  # This method is meant to be overloaded and maximize shared code
+  def value_updated()
+    self.attribute_updated(0x0406, 0x0000)
   end
 
   #############################################################
@@ -85,50 +60,41 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x0406              # ========== Occupancy Sensing ==========
       if   attribute == 0x0000          #  ---------- Occupancy / U8 ----------
-        if self.shadow_occupancy != nil
-          return tlv_solo.set(TLV.U1, self.shadow_occupancy)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
+        return tlv_solo.set_or_nil(TLV.U1, self.shadow_bool_value)
       elif attribute == 0x0001          #  ---------- OccupancySensorType / enum8 ----------
         return tlv_solo.set(TLV.U1, 3)  # physical contact
       elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------
         return tlv_solo.set(TLV.U1, 0)  # unknown
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 3)    # 4 = New data model format and notation
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################
-  # update_virtual
-  #
-  # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    var val_onoff = payload_json.find("Occupancy")
-    if val_onoff != nil
-      val_onoff = bool(val_onoff)
-      if self.shadow_occupancy != val_onoff
-        self.attribute_updated(0x0406, 0x0000)
-        self.shadow_occupancy = val_onoff
-      end
-    end
-    super(self).update_virtual(payload_json)
-  end
-
+  # For Bridge devices
   #############################################################
-  # append_state_json
+  #############################################################
+  # web_values
   #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json()
-    return f',"Occupancy":{int(self.shadow_occupancy)}'
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("Occupancy%i %s", self.shadow_bool_value, self.web_value_onoff(self.shadow_occupancy)))
   end
 
+  # Show prefix before web value
+  def web_values_prefix()
+    import webserver
+    var name = self.get_name()
+    if !name
+      name = "Switch" + str(self.shadow_bool_value)
+    end
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+  end
+  #############################################################
+  #############################################################
+  
 end
 matter.Plugin_Sensor_Occupancy = Matter_Plugin_Sensor_Occupancy

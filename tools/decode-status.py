@@ -121,7 +121,7 @@ a_setoption = [[
     "(Tuya) Enable (1) TuyaMcuReceived messages over Mqtt",
     "(Buzzer) Enable (1) buzzer when available",
     "(Light) Enable multi-channels PWM (1) instead of Color PWM (0)",
-    "(not used) Limits Tuya dimmers to minimum of 10% (25) when enabled",
+    "(Serial) Invert Serial receive on SerialBridge (1)",
     "(Energy) Enable Weekend Energy Tariff",
     "(DDS2382) Select different Modbus registers (1) for Active Energy (#6531)",
     "(Energy) Enable (1) hardware energy total counter as reference (#6561)",
@@ -212,8 +212,10 @@ a_setoption = [[
     "(Berry) Handle berry led using RMT0 as additional WS2812 scheme",
     "(ZCDimmer) Enable rare falling Edge dimmer instead of leading edge",
     "(Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval",
-    "",
-    "","","","",
+    "(NeoPool) Output sensitive data (1)",
+    "(MQTT) Disable publish ModbusReceived MQTT messages (1), you must use event trigger rules instead",
+    "(Counter) Enable counting on both rising and falling edge (1)",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -300,7 +302,16 @@ a_features = [[
     "USE_BIOPDU","USE_MCP23XXX_DRV","USE_PMSA003I","USE_LOX_O2",
     "USE_GDK101","USE_GM861","USE_TC74","USE_PCA9557",
     "USE_SGP4X","USE_MAX17043","USE_ENS16x","USE_ENS210",
-    "USE_HC8","","",""
+    "USE_HC8","USE_HDMI_CEC","USE_BLE_ESP32","USE_MATTER_DEVICE"
+    ],[
+    "USE_MAGIC_SWITCH","USE_PIPSOLAR","USE_GPIO_VIEWER","USE_AMSX915",
+    "USE_SPI_LORA","USE_SPL06_007","USE_QMP6988","USE_WOOLIIS",
+    "USE_HX711_M5SCALES","USE_RX8010","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","",""
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"
@@ -328,7 +339,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v13.1.0.4 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v14.2.0.4 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
