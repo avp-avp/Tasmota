@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_OPENTHERM_
+#ifdef USE_OPENTHERM
 
 #define XSNS_69 69
 
@@ -177,7 +177,7 @@ void IRAM_ATTR sns_opentherm_handleInterrupt()
     sns_ot_master->handleInterrupt();
 }
 
-void sns_opentherm_processResponseCallback(unsigned long response, int st)
+void sns_opentherm_processResponseCallback(unsigned long response, byte st)
 {
     OpenThermResponseStatus status = OpenThermResponseStatus(st);
     AddLog(LOG_LEVEL_DEBUG_MORE,
@@ -229,7 +229,7 @@ bool sns_opentherm_Init()
     if (PinUsed(GPIO_BOILER_OT_RX) && PinUsed(GPIO_BOILER_OT_TX))
     {
         sns_ot_master = new OpenTherm(Pin(GPIO_BOILER_OT_RX), Pin(GPIO_BOILER_OT_TX));
-        sns_ot_master->begin(sns_opentherm_handleInterrupt, sns_opentherm_processResponseCallback);
+        sns_ot_master->begin(sns_opentherm_handleInterrupt, (void (*)(long unsigned int, OpenThermResponseStatus))sns_opentherm_processResponseCallback);
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_CONNECTING;
         return true;
     }

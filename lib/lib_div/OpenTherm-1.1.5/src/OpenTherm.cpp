@@ -406,6 +406,8 @@ OpenTherm::~OpenTherm()
     end();
 }
 
+const char *statusToString(OpenThermResponseStatus status){}
+
 const char *OpenTherm::statusToString(OpenThermResponseStatus status)
 {
     switch (status)

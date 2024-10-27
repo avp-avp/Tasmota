@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_OPENTHERM_
+#ifdef USE_OPENTHERM
 
 #include "OpenTherm.h"
 
