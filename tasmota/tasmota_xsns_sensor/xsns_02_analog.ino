@@ -1055,7 +1055,7 @@ void CmndAdcParam(void) {
         if ((GPIO_ADC_INPUT == adc_type) ||
             (GPIO_ADC_TEMP == adc_type) ||
             (GPIO_ADC_RANGE == adc_type)) {
-          Adc[channel].param[2] = abs(strtol(ArgV(argument, 4), nullptr, 10));      // param3 = abs(int)
+          Adc[channel].param[2] = strtol(ArgV(argument, 4), nullptr, 10);      // param3 = abs(int)
           Adc[channel].param[3] = abs(strtol(ArgV(argument, 5), nullptr, 10));      // param4 = abs(int)
         } else {
           Adc[channel].param[2] = (int)(CharToFloat(ArgV(argument, 4)) * 10000);    // param3 = float
