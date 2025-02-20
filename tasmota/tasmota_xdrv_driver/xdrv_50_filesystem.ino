@@ -497,56 +497,92 @@ bool TfsRenameFile(const char *fname1, const char *fname2) {
 /*********************************************************************************************\
  * Log file
  * 
- * Rotate max 8 x 100kB log files /log1 -> /log2 ... /log8 -> /log1 ...
- * Keep at least 100kB free on filesystem
- * Filesystem needs to ba larger than 110kB
+ * Enable with command `FileLog 1..4` or `FileLog 11..14`
+ * Rotate max 16 x FILE_LOG_SIZE kB log files /log01 -> /log02 ... /log16 -> /log01 ...
+ * Filesystem needs to be larger than 10k (FILE_LOG_FREE)
 \*********************************************************************************************/
 
-void FileLoggingAsync(bool refresh) {
-  static uint32_t index = 1;
+#ifndef FILE_LOG_SIZE
+#define FILE_LOG_SIZE  100               // Log file size in kBytes (100kB is based on minimal filesystem of 320kB)
+#endif
+#define FILE_LOG_FREE  10                // Minimum free filesystem space in kBytes
 
-  if (!ffs_type || !Settings->filelog_level) { return; }
-  if (refresh && !NeedLogRefresh(Settings->filelog_level, index)) { return; }
-  if (UfsSize() < 110) { return; }       // File system too small
+#define FILE_LOG_COUNT 16                // Number of log files (max 16 as four bits are reserved for index)
+#define FILE_LOG_NAME  "/log%02d"        // Log file name
+
+void FileLoggingAsync(bool refresh) {
+  static uint32_t index = 1;             // Rotating log buffer entry pointer
+
+  uint32_t filelog_level = Settings->filelog_level % 10;
+  if (!ffs_type || !filelog_level) { return; }  // No filesystem or [FileLog] disabled
+  if (refresh && !NeedLogRefresh(filelog_level, index)) { return; }  // No log buffer changes
+  uint32_t filelog_option = Settings->filelog_level / 10;
 
   char fname[14];
-  bool file_delete = false;
   File file;
-  while (1) {
-    snprintf_P(fname, sizeof(fname), PSTR(TASM_FILE_LOG), Settings->mbflag2.log_file_idx +1);  // /log1
-    if (file_delete) {
-      ffsp->remove(fname);               // Delete previous log file
-    }
-    file = ffsp->open(fname, "a");       // Append
+  uint32_t log_file_idx = Settings->mbflag2.log_file_idx;       // 0..15
+  for (uint32_t retry = 0; retry <= 1; retry++) {
+    snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), log_file_idx +1);  // /log01
+    file = ffsp->open(fname, "a");       // Append to existing log file
     if (!file) { 
-      file = ffsp->open(fname, "w");     // Make if not exists
+      file = ffsp->open(fname, "w");     // Make new log file
       if (!file) { 
-        AddLog(LOG_LEVEL_INFO, PSTR("FLG: Save failed"));
+        Settings->filelog_level = 0;     // [FileLog] disable
+        AddLog(LOG_LEVEL_INFO, PSTR("FLG: Logging disabled. Save failed"));
         return;                          // Failed to make file
       }
     }
-    if (file.size() > 100000) {          // Rotate log file if size over 100k
-      file.close();
-      Settings->mbflag2.log_file_idx++;
-      if ((8 == Settings->mbflag2.log_file_idx) ||  // Keep max 100k x 8 log files
-          (UfsFree() < 110)) {           // Keep free space around 100k
-        Settings->mbflag2.log_file_idx = 0;
-        file_delete = true;
-      }
-    } else {
-      break;
+
+    bool fs_full = (UfsFree() < FILE_LOG_FREE);
+    if (!fs_full && (file.size() < (FILE_LOG_SIZE * 1000))) { break; }
+
+    file.close();
+
+    if (1 == retry) {
+      Settings->filelog_level = 0;       // [FileLog] disable
+      AddLog(LOG_LEVEL_INFO, PSTR("FLG: Logging disabled. No free space"));
+      return;
+    }
+
+    // Rotate log file(s) as size is over FILE_LOG_SIZE or free space is less than FILE_LOG_FREE
+    uint32_t last_log_file_idx = log_file_idx;  // 0..15
+    log_file_idx++;
+
+    if ((1 == filelog_option) &&
+        (fs_full || (log_file_idx == FILE_LOG_COUNT))) {  // Rotate until free space is less than FILE_LOG_FREE
+      Settings->filelog_level = 0;       // [FileLog] disable
+      AddLog(LOG_LEVEL_INFO, PSTR("FLG: Logging disabled. Max rotates"));
+      return;
+    }
+
+    if (log_file_idx >= FILE_LOG_COUNT) { log_file_idx = 0; }  // Rotate max 16 log files
+    snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), log_file_idx +1);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("FLG: Rotate file %s"), fname +1);  // Skip leading slash
+    Settings->mbflag2.log_file_idx = log_file_idx;  // Save for restart or power on
+
+    if (0 == filelog_option) {           // Remove oldest log file(s)
+      // Remove log file(s) taking into account non-sequential file names and different file sizes
+      uint32_t idx = log_file_idx;       // Next log file index
+      do {                               // Need free space around FILE_LOG_SIZE so find oldest log file(s) and remove it
+        snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), idx +1);
+        if (ffsp->remove(fname)) {       // Remove oldest (non-)sequential log file(s)
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("FLG: Delete file %s"), fname +1);  // Skip leading slash
+        }
+        idx++;
+        if (idx >= FILE_LOG_COUNT) { idx = 0; }
+      } while ((UfsFree() < FILE_LOG_FREE) && (idx != last_log_file_idx));
     }
   }
 
 #ifdef USE_WEBCAM
-  WcInterrupt(0);  // Stop stream if active to fix TG1WDT_SYS_RESET
+  WcInterrupt(0);                        // Stop stream if active to fix TG1WDT_SYS_RESET
 #endif
   char* line;
   size_t len;
-  while (GetLog(Settings->filelog_level, &index, &line, &len)) {
+  while (GetLog(filelog_level, &index, &line, &len)) {
     // This will timeout on ESP32-webcam
     // But now solved with WcInterrupt(0) in support_esp.ino
-    file.write((uint8_t*)line, len -1);
+    file.write((uint8_t*)line, len -1);  // Write up to LOG_BUFFER_SIZE log data
     snprintf_P(fname, sizeof(fname), PSTR("\r\n"));
     file.write((uint8_t*)fname, 2);
   }
@@ -555,6 +591,18 @@ void FileLoggingAsync(bool refresh) {
 #endif
 
   file.close();
+}
+
+void FileLoggingDelete(void) {
+  if (!ffs_type) { return; }             // No filesystem
+
+  char fname[14];
+  for (uint32_t idx = 0; idx < FILE_LOG_COUNT; idx++) {
+    snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), idx +1);
+    ffsp->remove(fname);                 // Remove all log file(s)
+  }
+  Settings->mbflag2.log_file_idx = 0;
+  AddLog(LOG_LEVEL_INFO, PSTR("FLG: Log files deleted"));
 }
 
 /*********************************************************************************************\
@@ -1801,7 +1849,6 @@ void Switch_FTP(void) {
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
 
 bool Xdrv50(uint32_t function) {
   bool result = false;
