@@ -1033,10 +1033,14 @@ void CmndStatus(void)
   }
 
   if (((0 == payload) || (6 == payload)) && Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+    uint32_t mqtt_tls = 0;
+#ifdef USE_MQTT_TLS
+    mqtt_tls = MqttTLSEnabled() ? 1 : 0;
+#endif // USE_MQTT_TLS
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS6_MQTT "\":{\"" D_CMND_MQTTHOST "\":\"%s\",\"" D_CMND_MQTTPORT "\":%d,\"" D_CMND_MQTTCLIENT D_JSON_MASK "\":\"%s\",\""
-                          D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d,\"SOCKET_TIMEOUT\":%d}}"),
+                          D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"" D_JSON_MQTT_TLS "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d,\"SOCKET_TIMEOUT\":%d}}"),
                           SettingsText(SET_MQTT_HOST), Settings->mqtt_port, EscapeJSONString(SettingsText(SET_MQTT_CLIENT)).c_str(),
-                          TasmotaGlobal.mqtt_client, EscapeJSONString(SettingsText(SET_MQTT_USER)).c_str(), MqttConnectCount(), MQTT_MAX_PACKET_SIZE, Settings->mqtt_keepalive, Settings->mqtt_socket_timeout);
+                          TasmotaGlobal.mqtt_client, EscapeJSONString(SettingsText(SET_MQTT_USER)).c_str(), MqttConnectCount(), mqtt_tls, MQTT_MAX_PACKET_SIZE, Settings->mqtt_keepalive, Settings->mqtt_socket_timeout);
     CmndStatusResponse(6);
   }
 
@@ -2163,8 +2167,22 @@ void CmndLogport(void)
 
 #ifdef USE_UFILESYS
 void CmndFilelog(void) {
-  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
-    Settings->filelog_level = XdrvMailbox.payload;
+  // Filelog 0      - Disable file logging
+  // Filelog 1..4   - Enable rotating file logging
+  // Filelog 10     - Remove log files and disable file logging
+  // Filelog 11..14 - Remove log files and enable file logging until filesystem is full or max rotates
+  if (XdrvMailbox.payload >= LOG_LEVEL_NONE) {
+    uint32_t filelog_level = XdrvMailbox.payload % 10;
+    uint32_t filelog_option = XdrvMailbox.payload / 10;
+    if (1 == filelog_option) {                 // Enable file logging until filesystem is full
+      FileLoggingDelete();                     // Remove all log files
+      if (LOG_LEVEL_NONE == filelog_level) {   // Remove log files and disable logging
+        filelog_option = 0;
+      }
+    }
+    if ((filelog_level >= LOG_LEVEL_NONE) && (filelog_level <= LOG_LEVEL_DEBUG_MORE)) {
+      Settings->filelog_level = (filelog_option * 10) + filelog_level;
+    }
   }
   ResponseCmndNumber(Settings->filelog_level);
 }
@@ -2732,6 +2750,8 @@ void CmndWifi(void) {
       {
         Settings->flag4.network_wifi = XdrvMailbox.payload;
         if (Settings->flag4.network_wifi) {
+//          TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
+//          WifiConnect();
 #ifdef ESP32
           WifiConnect();
 #else   // ESP8266
