@@ -5,7 +5,7 @@
 
 # Templates
 
-Find below the available templates as of February 2025. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
+Find below the available templates as of June 2025. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
 
 ## Adapter Board
 ```
@@ -403,7 +403,6 @@ Shelly Vintage 4W 260lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,
 Shelly Vintage 7W 750lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Shelly Vintage 7W 750lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 SmartDGM 9W 806lm            {"NAME":"L-WB9W1","GPIO":[0,0,0,0,0,416,0,0,160,0,0,0,0,0],"FLAG":0,"BASE":18}
-Smitch 10W 6500K             {"NAME":"Smitch Ambience SB-0110","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Smitch 10W 6500K             {"NAME":"Smitch 10W 6500K Dimmable Bulb (SB0110 - E27)","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":1}
 TCP Smart 806lm Warm White   {"NAME":"TCP Smart Clas","GPIO":[0,0,0,0,0,0,0,0,0,416,0,0,0,0],"FLAG":0,"BASE":1}
 TCP Smart 810lm Filament     {"NAME":"TCP Filament","GPIO":[0,0,0,0,0,0,0,0,0,0,448,0,0,0],"FLAG":0,"BASE":18}
@@ -464,7 +463,7 @@ QS-WiFi-D01-TRIAC 150W       {"NAME":"QS-WiFi-D01-TRIAC","GPIO":[0,3200,0,3232,0
 RJWF-02A                     {"NAME":"RJWF-02A","GPIO":[32,2272,0,2304,0,0,0,0,0,0,288,0,0,0],"FLAG":0,"BASE":54}
 Shelly Dimmer                {"NAME":"Shelly Dimmer 1","GPIO":[0,3200,0,3232,5568,5600,0,0,192,0,193,288,0,4736],"FLAG":0,"BASE":18}
 Shelly Dimmer 2              {"NAME":"Shelly Dimmer 2","GPIO":[0,3200,0,3232,5568,5600,0,0,193,0,192,0,320,4736],"FLAG":0,"BASE":18}
-Shelly Plus 0-10V Dimmer     {"NAME":"Shelly Plus 0-10V Dimmer","GPIO":[288,0,0,0,192,0,0,0,0,0,0,0,0,0,193,1,0,0,0,0,0,32,416,0,0,0,0,0,4736,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+Shelly Plus 0-10V Dimmer     {"NAME":"Shelly Plus 0-10V Dimmer","GPIO":[288,0,0,0,192,0,0,0,0,0,0,0,0,0,193,1,0,0,0,0,0,32,448,0,0,0,0,0,4736,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 Sonoff D1                    {"NAME":"Sonoff D1","GPIO":[1,3200,0,3232,0,0,0,0,0,320,0,0,0,0],"FLAG":0,"BASE":74}
 ```
 
@@ -2280,6 +2279,7 @@ Athom 8Ch Inching/Self-locking 10A  {"NAME":"Athom 8CH Relay Board","GPIO":[0,0,
 Claudy 5V                    {"NAME":"CLAUDY","GPIO":[0,0,225,0,0,0,0,0,0,0,0,224,0,0],"FLAG":0,"BASE":18}
 Devantech 8x16A              {"NAME":"ESP32LR88","GPIO":[0,0,231,0,32,35,0,0,229,230,228,0,33,34,36,37,0,38,39,544,0,225,226,227,0,0,0,0,0,224,3232,3200,0,0,0,0],"FLAG":0,"BASE":1}
 Dingtian 16 Channel          {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9729,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+Dingtian 2 Channel           {"NAME":"Dingtian DT-R002","GPIO":[5536,9408,225,9440,0,0,0,0,0,9952,0,0,224,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,576,0,0,0,160,0,0,161],"FLAG":0,"BASE":1}
 Dingtian 32 Channel          {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9731,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 Dingtian 4 Channel           {"NAME":"Dingtian DT-R004","GPIO":[0,9408,225,9440,0,0,0,0,227,9952,0,0,224,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,226,162,0,163,160,0,0,161],"FLAG":0,"BASE":1}
 Dingtian 8 Channel           {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9728,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
@@ -2455,7 +2455,6 @@ Connect SmartHome 3 Gang Wall Switch ()  {"NAME":"CSH-SWTCH3","GPIO":[0,0,288,0,
 Csmart US-B2                 {"NAME":"Csmart US-B2","GPIO":[0,544,0,33,32,0,0,0,0,225,224,0,0,0],"FLAG":0,"BASE":18}
 Delock WLAN EASY-USB         {"NAME":"Delock 11828","GPIO":[0,0,0,32,0,0,0,0,0,576,224,0,0,0],"FLAG":0,"BASE":53}
 Deta 1 Gang                  {"NAME":"Deta 1G Switch","GPIO":[0,0,0,0,544,0,0,0,0,224,0,0,64,0],"FLAG":0,"BASE":18}
-Deta 2 Gang                  {"NAME":"DETA 2G Switch","GPIO":[0,0,0,0,544,0,0,0,65,224,225,0,64,0],"FLAG":0,"BASE":18}
 Deta 3 Gang                  {"NAME":"DETA 3G Switch","GPIO":[544,0,0,66,65,224,0,0,226,0,225,0,64,0],"FLAG":0,"BASE":18}
 Deta 4 Gang                  {"NAME":"Deta 4G Switch","GPIO":[576,0,0,34,33,224,0,0,226,35,225,227,32,0],"FLAG":0,"BASE":18}
 DETA Mechanism               {"NAME":"Deta 6014HA","GPIO":[0,0,0,0,0,0,0,0,320,0,32,0,224,0],"FLAG":0,"BASE":18}
