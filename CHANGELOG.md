@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - Basic support for ESP32-P4 (#23663)
 - ESP32-P4 command `HostedOta` (#23675)
 - Support for RV3028 RTC (#23672)
+- Berry preview of animation framework (#23740)
+- Berry `call()` now works for classes
 
 ### Breaking Changed
 
@@ -20,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - OpenTherm library from v0.9.0 to v1.1.5 (#23704)
 
 ### Fixed
+- NeoPool reset to default settings (#23734)
 
 ### Removed
 

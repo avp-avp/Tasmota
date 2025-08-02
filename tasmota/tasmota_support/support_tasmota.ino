@@ -410,9 +410,11 @@ void SetAllPower(uint32_t state, uint32_t source) {
       break;
     }
 #ifdef USE_SONOFF_IFAN
-    // Do not touch Fan relays
-    TasmotaGlobal.power &= 0x0001;
-    TasmotaGlobal.power |= (current_power & 0xFFFE);
+    if (IsModuleIfan()) {
+      // Do not touch Fan relays
+      TasmotaGlobal.power &= 0x0001;
+      TasmotaGlobal.power |= (current_power & 0xFFFE);
+    }
 #endif  // USE_SONOFF_IFAN
     SetDevicePower(TasmotaGlobal.power, source);
   }
@@ -1118,6 +1120,7 @@ void PerformEverySecond(void)
 
     Settings->last_module = Settings->module;
 
+
 #ifdef USE_DEEPSLEEP
     if (!(DeepSleepEnabled() && !Settings->flag3.bootcount_update)) {  // SetOption76  - (Deepsleep) Enable incrementing bootcount (1) when deepsleep is enabled
 #endif
@@ -1514,34 +1517,6 @@ void Every250mSeconds(void)
         AllowInterrupts(1);
       }
     }
-
-#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
-    if (TasmotaGlobal.hosted_ota_state_flag && CommandsReady()) {
-      TasmotaGlobal.hosted_ota_state_flag--;
-/*
-      if (2 == TasmotaGlobal.hosted_ota_state_flag) {
-        SettingsSave(0);
-      }
-*/
-      if (TasmotaGlobal.hosted_ota_state_flag <= 0) {
-        // Blocking
-        int ret = OTAHostedMCU(TasmotaGlobal.hosted_ota_url);
-        free(TasmotaGlobal.hosted_ota_url);
-        TasmotaGlobal.hosted_ota_url = nullptr;
-        Response_P(PSTR("{\"" D_CMND_HOSTEDOTA "\":\""));
-        if (ret == ESP_OK) {
-          // next lines are questionable, because currently the system will reboot immediately on succesful upgrade
-          ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
-          TasmotaGlobal.restart_flag = 5;                 // Allow time for webserver to update console
-        } else {
-          ResponseAppend_P(PSTR(D_JSON_FAILED " %d\"}"), ret);
-        }
-        ResponseAppend_P(PSTR("\"}"));
-        MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_CMND_HOSTEDOTA));
-      }
-    }
-#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
-
     break;
   case 1:                                                 // Every x.25 second
     if (MidnightNow()) {

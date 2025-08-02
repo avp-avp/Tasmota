@@ -1,18 +1,23 @@
 # Decoder files are modeled on the *.js files found here:
 #  https://github.com/TheThingsNetwork/lorawan-devices/tree/master/vendor
 
-var LwRegions = ["EU868", "US915", "IN865","AU915","KZ865","RU864","AS923", "AS923-1","AS923-2","AS923-3"]
+var LwRegions = ["EU868","US915","IN865","AU915","KZ865","RU864","AS923","AS923-1","AS923-2","AS923-3"]
 var LwDeco
 
 import mqtt 
+import string
 
 class lwdecode_cls
-  var thisDevice
   var LwDecoders
+  var topic
 
   def init()
-    self.thisDevice = tasmota.cmd('Status',true)['Status']['Topic']
     self.LwDecoders = {}
+    self.topic = string.replace(string.replace(
+                   tasmota.cmd('_FullTopic',true)['FullTopic'],
+                   '%topic%', tasmota.cmd('_Status',true)['Status']['Topic']),
+                   '%prefix%', tasmota.cmd('_Prefix',true)['Prefix3'])  # tele
+                 + 'SENSOR'
 
     if global.lwdecode_driver
       global.lwdecode_driver.stop() # Let previous instance bail out cleanly
@@ -26,6 +31,7 @@ class lwdecode_cls
 
     var deviceData = data['LwReceived']
     var deviceName = deviceData.keys()()
+    var Name = deviceData[deviceName]['Name']
     var Node = deviceData[deviceName]['Node']
     var RSSI = deviceData[deviceName]['RSSI']
     var Payload = deviceData[deviceName]['Payload']
@@ -44,9 +50,18 @@ class lwdecode_cls
     end 
 
     if Payload.size() && self.LwDecoders.find(decoder)
-      var topic = "tele/" + self.thisDevice + "/SENSOR"
-      var decoded = self.LwDecoders[decoder].decodeUplink(Node, RSSI, FPort, Payload)	
-      var mqttData = {"LwDecoded":{deviceName:decoded}}
+      var decoded = self.LwDecoders[decoder].decodeUplink(Name, Node, RSSI, FPort, Payload)	
+      decoded.insert("Node", Node)
+      decoded.insert("RSSI", RSSI)
+      var mqttData = {deviceName:decoded}
+      # Abuse SetOption83 - (Zigbee) Use FriendlyNames (1) instead of ShortAddresses (0) when possible
+      if tasmota.get_option(83) == 0  # SetOption83 - Remove LwDecoded form JSON message (1)
+        mqttData = {"LwDecoded":{deviceName:decoded}}
+      end
+      var topic = self.topic
+      if tasmota.get_option(89) == 1  # SetOption89 - Distinct MQTT topics per device (1)
+        topic = self.topic + "/" + deviceData[deviceName]['DevEUIh'] + deviceData[deviceName]['DevEUIl']
+      end
       mqtt.publish(topic, json.dump(mqttData))
       tasmota.global.restart_flag = 0 # Signal LwDecoded successful (default state)
     end 
@@ -83,6 +98,13 @@ class lwdecode_cls
       batt_percent /= 7                                       # 1..14px showing battery load
       msg += format("<td><i class=\"bt\" title=\"%.3fV (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
                    battery, self.dhm(battery_last_seen), batt_percent, color_text)
+    elif battery >= 100000 && battery <= 100100               # battery already expressed in %
+      var pbatt = battery - 100000
+      var batt_percent = pbatt
+      if batt_percent > 98 batt_percent = 98 end              # 98% / 14px = 7
+      batt_percent /= 7                                       # 1..14px showing battery load
+      msg += format("<td><i class=\"bt\" title=\"%d%% (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
+                   pbatt, self.dhm(battery_last_seen), batt_percent, color_text)
     else
       msg += "<td>&nbsp;</td>"
     end
@@ -140,10 +162,6 @@ lwdecode = lwdecode_cls()
 
 import webserver
 class webPageLoRaWAN : Driver
-  def sendNodeButton(node)
-     webserver.content_send("<td><button onclick='selNode("+str(node)+")' id='n"+str(node)+"' class='button inactive' style='width:30px'>"+str(node)+"</button>")
-  end
-
   def web_add_config_button()
     webserver.content_send("<p><form id=ac action='lrw' style='display: block;' method='get'><button>LoRaWAN</button></form></p>")
   end
@@ -152,86 +170,101 @@ class webPageLoRaWAN : Driver
   def pageLoRaWAN()
     if !webserver.check_privileged_access() return nil end
 
-    var inode=1
+    var inode = 1
     var cmdArg  
     if webserver.has_arg('save')
      inode = webserver.arg('node')
-     tasmota.cmd('LoRaWanAppKey'+inode+' '+ webserver.arg('ak'),true)
+     tasmota.cmd('LoRaWanAppKey' + inode + ' '+ webserver.arg('ak'), true)
      cmdArg = webserver.arg('dc')
-     if !cmdArg cmdArg='"' end
-     tasmota.cmd('LoRaWanDecoder'+inode+' '+cmdArg,true)
+     if !cmdArg cmdArg = '"' end
+     tasmota.cmd('LoRaWanDecoder' + inode + ' ' + cmdArg, true)
      cmdArg = webserver.arg('an')
-     if !cmdArg cmdArg='"' end
-     tasmota.cmd('LoRaWanName'+inode+' '+cmdArg,true)
+     if !cmdArg cmdArg = '"' end
+     tasmota.cmd('LoRaWanName' + inode + ' ' + cmdArg, true)
+     cmdArg = webserver.arg('ce')
+     if !cmdArg cmdArg = '0' else cmdArg = '1' end
+     tasmota.cmd('LoRaWanNode' + inode + ' ' + cmdArg, true)
     end
+
+    var appKey, decoder, name, enabled
+    var hintAK = '32 character Application Key'
+    var hintDecoder = 'Decoder file, ending in .be'
+    var hintAN = 'Device name for MQTT messages'
+    var arg = 'LoRaWanNode'
+    var enables = string.split(tasmota.cmd(arg, true).find(arg), ',') # [1,!2,!3,!4,5,6]
+    var maxnode = enables.size()
 
     webserver.content_start("LoRaWAN")           #- title of the web page -#
     webserver.content_send_style()               #- send standard Tasmota styles -#
     webserver.content_send(
-     "<style>.inactive{background:#10537c;}.active{background:#1fa3ec;}</style>"
-     "<h2>LoRaWAN End Devices</h2>"
+     "<style>"
+     ".tl{float:left;border-radius:0;border:1px solid var(--c_frm);padding:1px;width:12.5%;}"
+     ".tl:hover{background:var(--c_frm);}"
+     ".inactive{background:var(--c_tab);color:var(--c_tabtxt);font-weight:normal;}"
+     ".active{background:var(--c_frm);color:var(--c_txt);font-weight:bold;}"
+     "</style>"
      "<script>"
      "function selNode(n){"
-     " var i;var d=4;"
-     " var e=document.getElementById('n'+n);"
-     " var o=document.getElementsByClassName('button active');"
-     " if(o.length){"
-     "  for(i=0;i<o.length;i++){"
-     "  o[i].classList.add('inactive');"
-     "  o[i].classList.remove('active');"
-     "  }"
-     " }"
-     " e.classList.add('active');"
-     " for(i=1;i<=16;i++){"
-     "  document.getElementById('nd'+i).style.display=(i==n)?'block':'none';"
-     " }"
+      "var i;"
+      "var e=document.getElementById('n'+n);"
+      "var o=document.getElementsByClassName('tl active');"
+      "if(o.length){"
+       "for(i=0;i<o.length;i++){"
+        "o[i].classList.add('inactive');"
+        "o[i].classList.remove('active');"
+       "}"
+      "}"
+      "e.classList.add('active');"
+      "for(i=1;i<="+str(maxnode)+";i++){"
+       "document.getElementById('nd'+i).style.display=(i==n)?'block':'none';"
+      "}"
      "}"
      "window.onload = function(){selNode("+str(inode)+");};"
      "</script>")
 
-    var arg, appKey, decoder, name
-    var hintAK='32 character Application Key'
-    var hintDecoder='Decoder file, ending in .be'
-    var hintAN='Device name for MQTT messages'
-    webserver.content_send("<table><tr>")
-    for node:1..8
-        self.sendNodeButton(node)
+    webserver.content_send(
+    f"<fieldset>"
+     "<legend><b>&nbsp;LoRaWan End Device&nbsp;</b></legend>"
+     "<br><div>")                                #- Add space and indent to align form tabs -#
+    for node:1 .. maxnode
+     webserver.content_send(f"<button type='button' onclick='selNode({node})' id='n{node}' class='tl inactive'>{node}</button>")
     end
-    webserver.content_send("<tr>")
-    for node:9..16
-        self.sendNodeButton(node)
-    end
-    webserver.content_send("</table>")
-    for node:1..16
-     arg='LoRaWanAppKey' + str(node)
-     appKey=tasmota.cmd(arg,true).find(arg)
-     arg='LoRaWanName' + str(node)
-     name=tasmota.cmd(arg,true).find(arg)
-     arg='LoRaWanDecoder' + str(node)
-     decoder=tasmota.cmd(arg,true).find(arg)
+    webserver.content_send(
+    f"</div><br><br><br><br>")                   #- Terminate indent and add space -#
+    for node:1 .. maxnode
+     enabled = ""
+     if enables[node-1][0] != '!'
+       enabled = ' checked'
+     end
+     arg = 'LoRaWanAppKey' + str(node)
+     appKey = tasmota.cmd(arg, true).find(arg)
+     arg = 'LoRaWanName' + str(node)
+     name = tasmota.cmd(arg, true).find(arg)
+     arg = 'LoRaWanDecoder' + str(node)
+     decoder = tasmota.cmd(arg, true).find(arg)
      webserver.content_send(
-      "<div id='nd"+str(node)+"' style='display:none'>"
-      "<fieldset>"
-      "<legend><b>&nbsp;End Device "+str(node)+"&nbsp;</b></legend>"
+     f"<div id='nd{node}' style='display:none'>"
       "<form action='' method='post'>"
-      "<p>Application Key"
-      "<input title='"+hintAK+"' pattern='[A-Fa-f0-9]{32}' id='ak' minlength='32' maxlength='32' required='' placeholder='"+hintAK+"' value='"+appKey+ "' name='ak' style='font-size:smaller'>"
-      "</p>"
-      "<p></p>"
-      "<p>Device Name"
-      "<input id='an' placeholder='"+hintAN+"' value='"+name+ "' name='an'>"
-      "</p>"
-      "<p></p>"
-      "<p>Decoder File"
-      "<input title='"+hintDecoder+"' id='dc'  placeholder='"+hintDecoder+"' value='"+decoder+"' name='dc'>"
-      "</p>"
-      "<p></p>"
-      "<button name='save' class='button bgrn'>Save</button>"
-      "<input type='hidden' name='node' value='"+str(node)+"'>"
+       "<p><label><input id='ce' name='ce' type='checkbox'{enabled}><b>Enabled</b></label></p>"
+       "<p><b>Application Key</b>"
+        "<input title='{hintAK}' pattern='[A-Fa-f0-9]{{32}}' id='ak' minlength='32' maxlength='32' required='' placeholder='{hintAK}' value='{appKey}' name='ak' style='font-size:smaller'>"
+       "</p>"
+       "<p></p>"
+       "<p><b>Device Name</b>"
+        "<input id='an' placeholder='{hintAN}' value='{name}' name='an'>"
+       "</p>"
+       "<p></p>"
+       "<p><b>Decoder File</b>"
+        "<input title='{hintDecoder}' id='dc' placeholder='{hintDecoder}' value='{decoder}' name='dc'>"
+       "</p>"
+       "<br>"
+       "<button name='save' class='button bgrn'>Save</button>"
+       "<input type='hidden' name='node' value='{node}'>"
       "</form>"
-      "</fieldset>"
       "</div>")
     end
+    webserver.content_send(
+    f"</fieldset>")
 
     webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to conf page -#
     webserver.content_stop()                        #- end of web page -#
