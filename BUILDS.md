@@ -36,6 +36,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_EXPRESSION            | -     | x / x | -     | -     | -     | -     |
 | SUPPORT_IF_STATEMENT      | -     | x / x | -     | -     | -     | -     |
 | USE_HOTPLUG               | -     | - / - | -     | -     | -     | -     |
+| USE_INFLUXDB              | -     | - / x | -     | -     | -     | -     |
 | USE_PROMETHEUS            | -     | - / - | -     | -     | -     | -     |
 | USE_PING                  | -     | - / - | -     | -     | -     | -     |
 | USE_HDMI_CEC              | -     | - / - | -     | -     | -     | -     |
@@ -113,6 +114,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | -USE_PCF85063             | -     | - / - | -     | -     | -     | -     |
 | -USE_PCF85363             | -     | - / - | -     | -     | -     | -     |
 | -USE_RX8010               | -     | - / - | -     | -     | -     | -     |
+| -USE_RX8030               | -     | - / - | -     | -     | -     | -     |
 | USE_SHT                   | -     | - / x | -     | x     | -     | -     |
 | USE_HTU                   | -     | - / x | -     | x     | -     | -     |
 | USE_BMP                   | -     | - / x | -     | x     | -     | -     |

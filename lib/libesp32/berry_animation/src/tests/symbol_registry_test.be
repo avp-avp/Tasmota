@@ -1,11 +1,11 @@
 # Symbol Registry Test Suite
 # Tests for the simplified transpiler's runtime symbol resolution approach
-# The simplified transpiler uses runtime resolution with new animation.global(name, module_name) signature
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/symbol_registry_test.be
 
 import animation
+import animation_dsl
 import string
 
 # Test basic symbol registration (simplified transpiler approach)
@@ -13,84 +13,72 @@ def test_basic_symbol_registration()
   print("Testing basic symbol registration...")
   
   var dsl_source = "color custom_red = 0xFF0000\n" +
-    "pattern solid_red = solid(custom_red)\n" +
+    "animation solid_red = solid(color=custom_red)\n" +
     "animation red_anim = solid_red"
   
-  var lexer = animation.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   # Process the DSL
   var berry_code = transpiler.transpile()
   
   assert(berry_code != nil, "Should compile successfully")
-  assert(!transpiler.has_errors(), "Should have no errors")
+  # No error check needed - transpiler would have raised exception if there were errors
   
   # Check that definitions appear in generated code (with underscore suffix)
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should generate color definition")
-  assert(string.find(berry_code, "var solid_red_") >= 0, "Should generate pattern definition")
-  assert(string.find(berry_code, "var red_anim_") >= 0, "Should generate animation definition")
+  assert(string.find(berry_code, "var solid_red_ = animation.solid(engine)") >= 0, "Should generate animation definition")
+  assert(string.find(berry_code, "solid_red_.color = custom_red_") >= 0, "Should set color parameter")
+  assert(string.find(berry_code, "var red_anim_") >= 0, "Should generate animation reference")
   
   print("✓ Basic symbol registration test passed")
   return true
 end
 
-# Test forward reference resolution
-def test_forward_reference_resolution()
-  print("Testing forward reference resolution...")
+# Test proper symbol ordering (no forward references)
+def test_proper_symbol_ordering()
+  print("Testing proper symbol ordering...")
   
-  # DSL with forward reference: pattern uses color defined later
-  var dsl_source = "pattern fire_pattern = solid(custom_red)\n" +
-    "color custom_red = 0xFF0000"
+  # DSL with proper ordering: color defined before animation uses it
+  var dsl_source = "color custom_red = 0xFF0000\n" +
+    "animation fire_pattern = solid(color=custom_red)"
   
-  var lexer = animation.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   var berry_code = transpiler.transpile()
   
-  # Should resolve the forward reference successfully
-  assert(berry_code != nil, "Should compile with forward reference")
-  assert(!transpiler.has_errors(), "Should resolve forward reference without errors")
+  # Should compile successfully with proper ordering
+  assert(berry_code != nil, "Should compile with proper symbol ordering")
+  # No error check needed - transpiler would have raised exception if there were errors
   
   # Check generated code contains both definitions (with underscore suffix)
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should define custom_red color")
-  assert(string.find(berry_code, "var fire_pattern_") >= 0, "Should define fire pattern")
+  assert(string.find(berry_code, "var fire_pattern_ = animation.solid(engine)") >= 0, "Should define fire animation")
+  assert(string.find(berry_code, "fire_pattern_.color = custom_red_") >= 0, "Should reference custom_red")
   
-  print("✓ Forward reference resolution test passed")
+  print("✓ Proper symbol ordering test passed")
   return true
 end
 
-# Test undefined reference handling (simplified transpiler uses runtime resolution)
+# Test undefined reference handling (should fail at transpile time)
 def test_undefined_reference_handling()
   print("Testing undefined reference handling...")
   
   # DSL with undefined reference
-  var dsl_source = "pattern test_pattern = solid(undefined_color)"
+  var dsl_source = "animation test_pattern = solid(color=undefined_color)"
   
-  var lexer = animation.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
-  var berry_code = transpiler.transpile()
-  
-  # Simplified transpiler compiles successfully but uses runtime resolution
-  assert(berry_code != nil, "Should compile with runtime resolution")
-  assert(!transpiler.has_errors(), "Should have no compile-time errors")
-  
-  # Check that runtime resolution code is generated with new two-parameter format
-  assert(string.find(berry_code, "animation.global('undefined_color_', 'undefined_color')") >= 0, "Should generate runtime resolution")
-  
-  # Verify the generated code compiles but will fail at runtime
-  var compiled_code = compile(berry_code)
-  assert(compiled_code != nil, "Generated code should compile")
-  
-  # Should raise exception when executed due to undefined variable
+  # Should detect undefined reference at transpile time and raise exception
   try
-    compiled_code()
-    assert(false, "Should raise exception at runtime for undefined variable")
-  except .. as e, msg
-    print(f"✓ Correctly deferred error to runtime: {e}")
+    var berry_code = transpiler.transpile()
+    assert(false, "Should raise exception for undefined reference")
+  except "dsl_compilation_error" as e, msg
+    # Check that error message mentions the undefined symbol
+    assert(string.find(msg, "undefined_color") >= 0, "Error should mention undefined_color")
+    assert(string.find(msg, "Unknown identifier") >= 0, "Should be an unknown identifier error")
   end
   
   print("✓ Undefined reference handling test passed")
@@ -102,22 +90,21 @@ def test_builtin_reference_handling()
   print("Testing built-in reference handling...")
   
   # DSL using built-in color names and animation functions
-  var dsl_source = "pattern red_pattern = solid(red)\n" +
-    "animation pulse_anim = pulse(red_pattern, 2s)"
+  var dsl_source = "animation red_pattern = solid(color=red)\n" +
+    "animation pulse_anim = pulsating_animation(color=red, period=2000)"
   
-  var lexer = animation.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   var berry_code = transpiler.transpile()
   
   # Should compile successfully with built-in references
   assert(berry_code != nil, "Should compile with built-in references")
-  assert(!transpiler.has_errors(), "Should handle built-in references without errors")
+  # No error check needed - transpiler would have raised exception if there were errors
   
   # Check generated code
-  assert(string.find(berry_code, "animation.solid(0xFFFF0000)") >= 0, "Should use built-in red color")
-  assert(string.find(berry_code, "animation.pulse") >= 0, "Should use built-in pulse function")
+  assert(string.find(berry_code, "red_pattern_.color = 0xFFFF0000") >= 0, "Should use built-in red color")
+  assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, "Should use built-in pulsating_animation function")
   
   print("✓ Built-in reference handling test passed")
   return true
@@ -129,9 +116,8 @@ def test_definition_generation()
   
   var dsl_source = "color custom_blue = 0x0000FF"
   
-  var lexer = animation.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   var berry_code = transpiler.transpile()
   
@@ -147,36 +133,35 @@ def test_definition_generation()
   return true
 end
 
-# Test complex forward references
-def test_complex_forward_references()
-  print("Testing complex forward references...")
+# Test complex symbol dependencies with proper ordering
+def test_complex_symbol_dependencies()
+  print("Testing complex symbol dependencies...")
   
-  # Complex DSL with multiple forward references
-  var dsl_source = "animation complex_anim = pulse(gradient_pattern, 3s)\n" +
-    "pattern gradient_pattern = solid(primary_color)\n" +
-    "color primary_color = 0xFF8000\n" +
+  # Complex DSL with proper symbol ordering (no forward references)
+  var dsl_source = "color primary_color = 0xFF8000\n" +
+    "animation complex_anim = pulsating_animation(color=primary_color, period=3000)\n" +
+    "animation gradient_pattern = solid(color=primary_color)\n" +
     "sequence demo {\n" +
     "  play complex_anim for 5s\n" +
     "}\n" +
     "run demo"
   
-  var lexer = animation.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   var berry_code = transpiler.transpile()
   
-  # Should resolve all forward references
-  assert(berry_code != nil, "Should compile complex forward references")
-  assert(!transpiler.has_errors(), "Should resolve all forward references")
+  # Should compile successfully with proper ordering
+  assert(berry_code != nil, "Should compile complex dependencies")
+  # No error check needed - transpiler would have raised exception if there were errors
   
   # Check all definitions are present (with underscore suffix)
   assert(string.find(berry_code, "var primary_color_") >= 0, "Should define primary color")
   assert(string.find(berry_code, "var gradient_pattern_") >= 0, "Should define gradient pattern")
   assert(string.find(berry_code, "var complex_anim_") >= 0, "Should define complex animation")
-  assert(string.find(berry_code, "def sequence_demo()") >= 0, "Should define sequence")
+  assert(string.find(berry_code, "var demo_ = animation.SequenceManager(engine)") >= 0, "Should define sequence")
   
-  print("✓ Complex forward references test passed")
+  print("✓ Complex symbol dependencies test passed")
   return true
 end
 
@@ -186,11 +171,11 @@ def run_symbol_registry_tests()
   
   var tests = [
     test_basic_symbol_registration,
-    test_forward_reference_resolution,
+    test_proper_symbol_ordering,
     test_undefined_reference_handling,
     test_builtin_reference_handling,
     test_definition_generation,
-    test_complex_forward_references
+    test_complex_symbol_dependencies
   ]
   
   var passed = 0

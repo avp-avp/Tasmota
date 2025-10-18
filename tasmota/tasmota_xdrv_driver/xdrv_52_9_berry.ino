@@ -32,7 +32,9 @@ extern "C" {
   #include "berry_matter.h"
 #endif
 #ifdef USE_WS2812
-  #include "berry_animate.h"
+  #ifdef USE_BERRY_ANIMATE
+    #include "berry_animate.h"
+  #endif // USE_BERRY_ANIMATE
   #ifdef USE_BERRY_ANIMATION
     #include "berry_animation.h"
   #endif // USE_BERRY_ANIMATION
@@ -66,7 +68,7 @@ void checkBeTop(void) {
   int32_t top = be_top(berry.vm);
   if (top != 0) {
     be_pop(berry.vm, top);   // TODO should not be there
-    AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "Error be_top is non zero=%d", top);
+    AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "Warning be_top is non zero=%d", top);
   }
 }
 
@@ -521,7 +523,7 @@ void CmndBrRun(void) {
     be_pop(berry.vm, 1);
   } else {
     Response_P(PSTR("{\"" D_PRFX_BR "\":\"[%s] %s\"}"), EscapeJSONString(be_tostring(berry.vm, -2)).c_str(), EscapeJSONString(be_tostring(berry.vm, -1)).c_str());
-    be_pop(berry.vm, 2);
+    be_pop(berry.vm, 3);
   }
 
   checkBeTop();
@@ -732,14 +734,14 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
   "<button type='submit'>Run code (or press 'Enter' twice)</button>"
   "</form>"
 #ifdef USE_BERRY_DEBUG
-  "<p><form method='post' >"
+  "<p></p><form method='post' >"
   "<button type='submit' name='rst' class='bred' onclick=\"if(confirm('Confirm removing endpoint')){clearTimeout(lt);return true;}else{return false;}\">Restart Berry VM (for devs only)</button>"
-  "</form></p>"
+  "</form>"
 #endif // USE_BERRY_DEBUG
   ;
 
 const char HTTP_BTN_BERRY_CONSOLE[] PROGMEM =
-  "<p><form action='bc' method='get'><button>Berry Scripting console</button></form></p>";
+  "<p></p><form action='bc' method='get'><button>Berry Scripting console</button></form>";
 
 
 void HandleBerryConsoleRefresh(void)
@@ -819,7 +821,7 @@ void HandleBerryBECLoaderButton(void) {
     const BeBECCode_t &bec = BECCode[i];
     if (!(*bec.loaded)) {
       if (be_global_find(vm, be_newstr(vm, bec.id)) < 0) {    // the global name  doesn't exist
-        WSContentSend_P("<form id=but_part_mgr style='display: block;' action='tapp' method='get'><input type='hidden' name='n' value='%s'/><button>[Load %s]</button></form><p></p>", bec.id, bec.display_name);
+        WSContentSend_P("<p></p><form id=but_part_mgr style='display:block;' action='tapp' method='get'><input type='hidden' name='n' value='%s'/><button>[Load %s]</button></form>", bec.id, bec.display_name);
       } else {
         *bec.loaded = true;
       }

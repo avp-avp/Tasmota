@@ -1,10 +1,31 @@
 # DSL Lexer Test Suite
-# Tests for DSLLexer class
+# Tests for create_lexer class
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/dsl_lexer_test.be
 
 import animation
+import animation_dsl
+import string
+
+# Helper function to extract all tokens from a pull lexer (for testing only)
+def extract_all_tokens(lexer)
+  var tokens = []
+  lexer.reset()  # Start from beginning
+  
+  while !lexer.at_end()
+    var token = lexer.next_token()
+    
+    # EOF token removed - check for nil instead
+    if token == nil
+      break
+    end
+    
+    tokens.push(token)
+  end
+  
+  return tokens
+end
 
 # Test basic tokenization
 def test_basic_tokenization()
@@ -12,8 +33,8 @@ def test_basic_tokenization()
   
   var dsl_source = "strip length 60\ncolor red = 0xFF0000\nrun demo"
   
-  var lexer = animation.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var tokens = extract_all_tokens(lexer)
   
   # Should have: strip, length, 60, color, red, =, #FF0000, run, demo, EOF
   print("  Found " + str(size(tokens)) + " tokens")
@@ -25,25 +46,24 @@ def test_basic_tokenization()
   assert(size(tokens) >= 9, "Should have at least 9 tokens")
   
   # Check first few tokens
-  assert(tokens[0].type == animation.Token.KEYWORD && tokens[0].value == "strip")
+  assert(tokens[0].type == 0 #-animation_dsl.Token.KEYWORD-# && tokens[0].value == "strip")
   # Note: "length" might be IDENTIFIER, not KEYWORD - that's OK for DSL properties
-  assert(tokens[2].type == animation.Token.NUMBER && tokens[2].value == "60")
+  assert(tokens[2].type == 2 #-animation_dsl.Token.NUMBER-# && tokens[2].value == "60")
   
   # Check color tokens
   var found_color_keyword = false
   var found_color_value = false
   for token : tokens
-    if token.type == animation.Token.KEYWORD && token.value == "color"
+    if token.type == 0 #-animation_dsl.Token.KEYWORD-# && token.value == "color"
       found_color_keyword = true
-    elif token.type == animation.Token.COLOR && token.value == "0xFF0000"
+    elif token.type == 4 #-animation_dsl.Token.COLOR-# && token.value == "0xFF0000"
       found_color_value = true
     end
   end
   assert(found_color_keyword, "Should find 'color' keyword")
   assert(found_color_value, "Should find '0xFF0000' color value")
   
-  # Should have no errors
-  assert(!lexer.has_errors(), "Should have no lexical errors")
+  # Should have no errors (lexer would have raised exception if there were errors)
   
   print("✓ Basic tokenization test passed")
   return true
@@ -54,18 +74,18 @@ def test_color_tokenization()
   print("Testing color tokenization...")
   
   var color_tests = [
-    ["0xFF0000", animation.Token.COLOR],
-    ["red", animation.Token.COLOR],
-    ["blue", animation.Token.COLOR],
-    ["white", animation.Token.COLOR]  # transparent is a keyword, so use white instead
+    ["0xFF0000", 4 #-animation_dsl.Token.COLOR-#],
+    ["red", 4 #-animation_dsl.Token.COLOR-#],
+    ["blue", 4 #-animation_dsl.Token.COLOR-#],
+    ["white", 4 #-animation_dsl.Token.COLOR-#]  # transparent is a keyword, so use white instead
   ]
   
   for test : color_tests
     var color_value = test[0]
     var expected_type = test[1]
     
-    var lexer = animation.DSLLexer("color test = " + color_value)
-    var tokens = lexer.tokenize()
+    var lexer = animation_dsl.create_lexer("color test = " + color_value)
+    var tokens = extract_all_tokens(lexer)
     
     var found_color = false
     for token : tokens
@@ -87,51 +107,33 @@ def test_numeric_tokenization()
   print("Testing numeric tokenization...")
   
   var numeric_tests = [
-    ["42", animation.Token.NUMBER],
-    ["3.14", animation.Token.NUMBER],
-    ["2s", animation.Token.TIME],
-    ["500ms", animation.Token.TIME],
-    ["1m", animation.Token.TIME],
-    ["2h", animation.Token.TIME],
-    ["50%", animation.Token.PERCENTAGE],
-    ["2x", animation.Token.MULTIPLIER]
+    ["42", 2 #-animation_dsl.Token.NUMBER-#],
+    ["3.14", 2 #-animation_dsl.Token.NUMBER-#],
+    ["2s", 5 #-animation_dsl.Token.TIME-#],
+    ["500ms", 5 #-animation_dsl.Token.TIME-#],
+    ["1m", 5 #-animation_dsl.Token.TIME-#],
+    ["2h", 5 #-animation_dsl.Token.TIME-#],
+    ["50%", 6 #-animation_dsl.Token.PERCENTAGE-#],
+    ["2x", 7 #-animation_dsl.Token.MULTIPLIER-#]
   ]
   
   for test : numeric_tests
     var value = test[0]
     var expected_type = test[1]
     
-    var lexer = animation.DSLLexer("value = " + value)
-    var tokens = lexer.tokenize()
+    var lexer = animation_dsl.create_lexer("value = " + value)
+    var tokens = extract_all_tokens(lexer)
     
     var found_numeric = false
     for token : tokens
       if token.value == value && token.type == expected_type
         found_numeric = true
         
-        # Test numeric value extraction
-        if token.is_numeric()
-          var numeric_val = token.get_numeric_value()
-          assert(numeric_val != nil, "Should extract numeric value from " + value)
-        end
-        
-        # Test time conversion
-        if token.type == animation.Token.TIME
-          var time_ms = token.get_numeric_value()
-          assert(time_ms != nil && time_ms > 0, "Should convert time to milliseconds")
-        end
-        
-        # Test percentage conversion
-        if token.type == animation.Token.PERCENTAGE
-          var percent_255 = token.get_numeric_value()
-          assert(percent_255 != nil && percent_255 >= 0 && percent_255 <= 255, "Should convert percentage to 0-255 range")
-        end
-        
         break
       end
     end
     
-    assert(found_numeric, "Should recognize '" + value + "' as " + animation.Token.to_string(expected_type))
+    assert(found_numeric, "Should recognize '" + value + "' as " + animation_dsl.Token.names[expected_type])
   end
   
   print("✓ Numeric tokenization test passed")
@@ -143,16 +145,16 @@ def test_keyword_recognition()
   print("Testing keyword recognition...")
   
   var keywords = [
-    "strip", "color", "pattern", "animation", "sequence", 
+    "strip", "color", "animation", "sequence", 
     "play", "for", "repeat", "if", "run"
   ]
   
   for keyword : keywords
-    var lexer = animation.DSLLexer(keyword + " test")
-    var tokens = lexer.tokenize()
+    var lexer = animation_dsl.create_lexer(keyword + " test")
+    var tokens = extract_all_tokens(lexer)
     
     assert(size(tokens) >= 2, "Should have at least 2 tokens")
-    assert(tokens[0].type == animation.Token.KEYWORD, "'" + keyword + "' should be recognized as keyword")
+    assert(tokens[0].type == 0 #-animation_dsl.Token.KEYWORD-#, "'" + keyword + "' should be recognized as keyword")
     assert(tokens[0].value == keyword, "Keyword value should match")
   end
   
@@ -165,41 +167,41 @@ def test_operators_and_delimiters()
   print("Testing operators and delimiters...")
   
   var operator_tests = [
-    ["=", animation.Token.ASSIGN],
-    ["==", animation.Token.EQUAL],
-    ["!=", animation.Token.NOT_EQUAL],
-    ["<", animation.Token.LESS_THAN],
-    ["<=", animation.Token.LESS_EQUAL],
-    [">", animation.Token.GREATER_THAN],
-    [">=", animation.Token.GREATER_EQUAL],
-    ["&&", animation.Token.LOGICAL_AND],
-    ["||", animation.Token.LOGICAL_OR],
-    ["!", animation.Token.LOGICAL_NOT],
-    ["+", animation.Token.PLUS],
-    ["-", animation.Token.MINUS],
-    ["*", animation.Token.MULTIPLY],
-    ["/", animation.Token.DIVIDE],
-    ["%", animation.Token.MODULO],
-    ["^", animation.Token.POWER],
-    ["(", animation.Token.LEFT_PAREN],
-    [")", animation.Token.RIGHT_PAREN],
-    ["{", animation.Token.LEFT_BRACE],
-    ["}", animation.Token.RIGHT_BRACE],
-    ["[", animation.Token.LEFT_BRACKET],
-    ["]", animation.Token.RIGHT_BRACKET],
-    [",", animation.Token.COMMA],
-    [";", animation.Token.SEMICOLON],
-    [":", animation.Token.COLON],
-    [".", animation.Token.DOT],
-    ["->", animation.Token.ARROW]
+    ["=", 8 #-animation_dsl.Token.ASSIGN-#],
+    ["==", 15 #-animation_dsl.Token.EQUAL-#],
+    ["!=", 16 #-animation_dsl.Token.NOT_EQUAL-#],
+    ["<", 17 #-animation_dsl.Token.LESS_THAN-#],
+    ["<=", 18 #-animation_dsl.Token.LESS_EQUAL-#],
+    [">", 19 #-animation_dsl.Token.GREATER_THAN-#],
+    [">=", 20 #-animation_dsl.Token.GREATER_EQUAL-#],
+    ["&&", 21 #-animation_dsl.Token.LOGICAL_AND-#],
+    ["||", 22 #-animation_dsl.Token.LOGICAL_OR-#],
+    ["!", 23 #-animation_dsl.Token.LOGICAL_NOT-#],
+    ["+", 9 #-animation_dsl.Token.PLUS-#],
+    ["-", 10 #-animation_dsl.Token.MINUS-#],
+    ["*", 11 #-animation_dsl.Token.MULTIPLY-#],
+    ["/", 12 #-animation_dsl.Token.DIVIDE-#],
+    ["%", 13 #-animation_dsl.Token.MODULO-#],
+    ["^", 14 #-animation_dsl.Token.POWER-#],
+    ["(", 24 #-animation_dsl.Token.LEFT_PAREN-#],
+    [")", 25 #-animation_dsl.Token.RIGHT_PAREN-#],
+    ["{", 26 #-animation_dsl.Token.LEFT_BRACE-#],
+    ["}", 27 #-animation_dsl.Token.RIGHT_BRACE-#],
+    ["[", 28 #-animation_dsl.Token.LEFT_BRACKET-#],
+    ["]", 29 #-animation_dsl.Token.RIGHT_BRACKET-#],
+    [",", 30 #-animation_dsl.Token.COMMA-#],
+    [";", 31 #-animation_dsl.Token.SEMICOLON-#],
+    [":", 32 #-animation_dsl.Token.COLON-#],
+    [".", 33 #-animation_dsl.Token.DOT-#],
+    ["->", 34 #-animation_dsl.Token.ARROW-#]
   ]
   
   for test : operator_tests
     var op = test[0]
     var expected_type = test[1]
     
-    var lexer = animation.DSLLexer("a " + op + " b")
-    var tokens = lexer.tokenize()
+    var lexer = animation_dsl.create_lexer("a " + op + " b")
+    var tokens = extract_all_tokens(lexer)
     
     var found_operator = false
     for token : tokens
@@ -209,7 +211,7 @@ def test_operators_and_delimiters()
       end
     end
     
-    assert(found_operator, "Should recognize '" + op + "' as " + animation.Token.to_string(expected_type))
+    assert(found_operator, "Should recognize '" + op + "' as " + animation_dsl.Token.names[expected_type])
   end
   
   print("✓ Operators and delimiters test passed")
@@ -227,25 +229,29 @@ def test_string_literals()
   ]
   
   for str_test : string_tests
-    var lexer = animation.DSLLexer("text = " + str_test)
-    var tokens = lexer.tokenize()
+    var lexer = animation_dsl.create_lexer("text = " + str_test)
+    var tokens = extract_all_tokens(lexer)
     
     var found_string = false
     for token : tokens
-      if token.type == animation.Token.STRING
+      if token.type == 3 #-animation_dsl.Token.STRING-#
         found_string = true
         break
       end
     end
     
     assert(found_string, "Should recognize string literal: " + str_test)
-    assert(!lexer.has_errors(), "String parsing should not produce errors")
+    # No errors check needed - lexer would have raised exception if there were errors
   end
   
-  # Test unterminated string (should produce error)
-  var lexer = animation.DSLLexer('text = "unterminated string')
-  var tokens = lexer.tokenize()
-  assert(lexer.has_errors(), "Unterminated string should produce error")
+  # Test unterminated string (should raise exception)
+  try
+    var lexer = animation_dsl.create_lexer('text = "unterminated string')
+    var tokens = extract_all_tokens(lexer)
+    assert(false, "Unterminated string should raise exception")
+  except "lexical_error" as e, msg
+    # Expected - unterminated string should raise lexical_error
+  end
   
   print("✓ String literals test passed")
   return true
@@ -262,12 +268,12 @@ def test_variable_references()
   ]
   
   for var_test : var_tests
-    var lexer = animation.DSLLexer("value = " + var_test)
-    var tokens = lexer.tokenize()
+    var lexer = animation_dsl.create_lexer("value = " + var_test)
+    var tokens = extract_all_tokens(lexer)
     
     var found_var_ref = false
     for token : tokens
-      if token.type == animation.Token.VARIABLE_REF && token.value == var_test
+      if token.type == 36 #-animation_dsl.Token.VARIABLE_REF-# && token.value == var_test
         found_var_ref = true
         break
       end
@@ -276,12 +282,16 @@ def test_variable_references()
     assert(found_var_ref, "Should recognize variable reference: " + var_test)
   end
   
-  # Test invalid variable references
+  # Test invalid variable references (should raise exceptions)
   var invalid_tests = ["$123", "$"]
   for invalid_test : invalid_tests
-    var lexer = animation.DSLLexer("value = " + invalid_test)
-    var tokens = lexer.tokenize()
-    assert(lexer.has_errors(), "Invalid variable reference should produce error: " + invalid_test)
+    try
+      var lexer = animation_dsl.create_lexer("value = " + invalid_test)
+      var tokens = extract_all_tokens(lexer)
+      assert(false, "Invalid variable reference should raise exception: " + invalid_test)
+    except "lexical_error" as e, msg
+      # Expected - invalid variable reference should raise lexical_error
+    end
   end
   
   print("✓ Variable references test passed")
@@ -298,12 +308,12 @@ def test_comments()
   ]
   
   for comment_test : comment_tests
-    var lexer = animation.DSLLexer(comment_test)
-    var tokens = lexer.tokenize()
+    var lexer = animation_dsl.create_lexer(comment_test)
+    var tokens = extract_all_tokens(lexer)
     
     var found_comment = false
     for token : tokens
-      if token.type == animation.Token.COMMENT
+      if token.type == 37 #-animation_dsl.Token.COMMENT-#
         found_comment = true
         break
       end
@@ -329,11 +339,9 @@ def test_complex_dsl()
     "color orange = rgb(255, 128, 0)\n" +
     "color yellow = hsv(60, 100, 100)\n" +
     "\n" +
-    "# Pattern Definitions\n" +
-    "pattern fire_gradient = gradient(red, orange, yellow)\n" +
-    "\n" +
     "# Animation Definitions\n" +
-    "animation fire_base = shift_left(fire_gradient, 200ms)\n" +
+    "animation fire_gradient = gradient(color=red)\n" +
+    "animation fire_base = shift_left(source=fire_gradient, speed=200ms)\n" +
     "\n" +
     "# Variable Definitions\n" +
     "set cycle_time = 5s\n" +
@@ -348,16 +356,15 @@ def test_complex_dsl()
     "# Execution\n" +
     "run campfire"
   
-  var lexer = animation.DSLLexer(complex_dsl)
-  var result = lexer.tokenize_with_errors()
+  var lexer = animation_dsl.create_lexer(complex_dsl)
+  var tokens = extract_all_tokens(lexer)
   
-  assert(result["success"], "Complex DSL should tokenize successfully")
-  assert(size(result["tokens"]) > 50, "Should have many tokens")
+  assert(size(tokens) > 50, "Should have many tokens")
   
   # Count token types
   var token_counts = {}
-  for token : result["tokens"]
-    var type_name = animation.Token.to_string(token.type)
+  for token : tokens
+    var type_name = animation_dsl.Token.names[token.type]
     if token_counts.contains(type_name)
       token_counts[type_name] += 1
     else
@@ -381,27 +388,36 @@ end
 def test_error_handling()
   print("Testing error handling...")
   
-  # Test invalid characters
-  var lexer1 = animation.DSLLexer("color red = @invalid")
-  var tokens1 = lexer1.tokenize()
-  assert(lexer1.has_errors(), "Invalid character should produce error")
+  # Test invalid characters (should raise exception)
+  try
+    var lexer1 = animation_dsl.create_lexer("color red = @invalid")
+    var tokens1 = extract_all_tokens(lexer1)
+    assert(false, "Invalid character should raise exception")
+  except "lexical_error" as e, msg
+    # Expected - invalid character should raise lexical_error
+    assert(size(msg) > 0, "Should have error message")
+  end
   
-  # Test invalid hex color
-  var lexer2 = animation.DSLLexer("color red = 0xGGGGGG")
-  var tokens2 = lexer2.tokenize()
-  assert(lexer2.has_errors(), "Invalid hex color should produce error")
+  # Test invalid hex color (should raise exception)
+  try
+    var lexer2 = animation_dsl.create_lexer("color red = 0xGGGGGG")
+    var tokens2 = extract_all_tokens(lexer2)
+    assert(false, "Invalid hex color should raise exception")
+  except "lexical_error" as e, msg
+    # Expected - invalid hex color should raise lexical_error
+    assert(size(msg) > 0, "Should have error message")
+  end
   
-  # Test unterminated string
-  var lexer3 = animation.DSLLexer('text = "unterminated')
-  var tokens3 = lexer3.tokenize()
-  assert(lexer3.has_errors(), "Unterminated string should produce error")
-  
-  # Test error reporting
-  var errors = lexer3.get_errors()
-  assert(size(errors) > 0, "Should have error details")
-  
-  var error_report = lexer3.get_error_report()
-  assert(size(error_report) > 0, "Should generate error report")
+  # Test unterminated string (should raise exception)
+  try
+    var lexer3 = animation_dsl.create_lexer('text = "unterminated')
+    var tokens3 = extract_all_tokens(lexer3)
+    assert(false, "Unterminated string should raise exception")
+  except "lexical_error" as e, msg
+    # Expected - unterminated string should raise lexical_error
+    assert(size(msg) > 0, "Should have error message")
+    assert(string.find(msg, "Unterminated") >= 0, "Error message should mention unterminated string")
+  end
   
   print("✓ Error handling test passed")
   return true
