@@ -2303,9 +2303,10 @@ void ZigbeeShow(bool json)
           bool validTempTarget = thermo.validTempTarget();
           bool validThSetpoint = thermo.validThSetpoint();
           bool validHumidity = thermo.validHumidity();
+          bool validCO2      = thermo.validCO2();
           bool validPressure = thermo.validPressure();
 
-          if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure) {
+          if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure || validCO2) {
             WSContentSend_P(msg[ZB_WEB_LINE_START]);
             if (validTemp) {
               char buf[12];
@@ -2322,6 +2323,9 @@ void ZigbeeShow(bool json)
             }
             if (validHumidity) {
               WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
+            }
+            if (validCO2) {
+              WSContentSend_P(PSTR(" &#x1F4A7; %d ppm"), thermo.getCO2());
             }
             if (validPressure) {
               WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());

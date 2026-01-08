@@ -190,8 +190,8 @@ enum Cx_cluster_short {
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0021,
   Cx0100, Cx0101, Cx0102, Cx0201, Cx0202, Cx0203, Cx0204,
   Cx0300, Cx0301, Cx0400, Cx0401, Cx0402, Cx0403,
-  Cx0404, Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
-  CxEF00, CxFC01, CxFC40, CxFCC0, CxFCCC,
+  Cx0404, Cx0405, Cx0406, Cx040D, Cx0500, Cx0702, Cx0B01, Cx0B04, 
+  Cx0B05, CxEF00, CxFC01, CxFC40, CxFCC0, CxFCCC,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
@@ -200,8 +200,8 @@ const uint16_t Cx_cluster[] PROGMEM = {
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0021,
   0x0100, 0x0101, 0x0102, 0x0201, 0x0202, 0x0203, 0x0204,
   0x0300, 0x0301, 0x0400, 0x0401, 0x0402, 0x0403,
-  0x0404, 0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
-  0xEF00, 0xFC01, 0xFC40, 0xFCC0, 0xFCCC,
+  0x0404, 0x0405, 0x0406, 0x040D, 0x0500, 0x0702, 0x0B01, 0x0B04, 
+  0x0B05, 0xEF00, 0xFC01, 0xFC40, 0xFCC0, 0xFCCC,
 };
 
 uint16_t CxToCluster(uint8_t cx) {
@@ -1108,6 +1108,13 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0406, 0x0011,  Z_(PIRUnoccupiedToOccupiedDelay),           Cm1, 0 },
   { Zuint8,   Cx0406, 0x0012,  Z_(PIRUnoccupiedToOccupiedThreshold),           Cm1, 0 },
   // { Zunk,     Cx0406, 0xFFFF,  Z_(),                    Cm0, 0 },    // Remove all other values
+
+  // CO2 Concentration Measurement cluster
+  //{ Zuint16,  Cx040D, 0x0000,  Z_(CO2),                     Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Thermo, CO2) },   // CO2 (ppm)
+  //{ Zuint16,  Cx040D, 0x0001,  Z_(CO2MinMeasuredValue),     Cm1, 0 },    //
+  //{ Zuint16,  Cx040D, 0x0002,  Z_(CO2MaxMeasuredValue),     Cm1, 0 },    //
+  //{ Zuint16,  Cx040D, 0x0003,  Z_(CO2Tolerance),            Cm1, 0 },    //
+  // { Zunk,     Cx040D, 0xFFFF,  Z_(),                      Cm0, 0 },    // Remove all other values
 
   // IAS Cluster (Intruder Alarm System)
   { Zenum8,   Cx0500, 0x0000,  Z_(ZoneState),             Cm1, 0 },    // Occupancy (map8)

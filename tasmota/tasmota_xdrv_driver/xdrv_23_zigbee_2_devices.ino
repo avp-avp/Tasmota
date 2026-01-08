@@ -461,6 +461,7 @@ public:
     temperature(-0x8000),
     pressure(-0x8000),
     humidity(0xFFFF),
+    CO2(0xFFFF),
     th_setpoint(0xFF),
     temperature_target(-0x8000)
     {}
@@ -468,18 +469,21 @@ public:
   inline bool validTemperature(void)    const { return -0x8000 != temperature; }
   inline bool validPressure(void)       const { return -0x8000 != pressure; }
   inline bool validHumidity(void)       const { return 0xFFFF != humidity; }
+  inline bool validCO2(void)            const { return 0xFFFF != CO2; }
   inline bool validThSetpoint(void)     const { return 0xFF != th_setpoint; }
   inline bool validTempTarget(void)     const { return -0x8000 != temperature_target; }
 
   inline int16_t  getTemperature(void)  const { return temperature; }
-  inline int16_t getPressure(void)      const { return pressure; }
+  inline int16_t  getPressure(void)     const { return pressure; }
   inline uint16_t getHumidity(void)     const { return humidity; }
+  inline uint16_t getCO2(void)          const { return CO2; }
   inline uint8_t  getThSetpoint(void)   const { return th_setpoint; }
   inline int16_t  getTempTarget(void)   const { return temperature_target; }
 
   inline void setTemperature(int16_t _temperature)      { temperature = _temperature; }
   inline void setPressure(int16_t _pressure)            { pressure = _pressure; }
   inline void setHumidity(uint16_t _humidity)           { humidity = _humidity; }
+  inline void setCO2(uint16_t _CO2)                     { CO2 = _CO2; }
   inline void setThSetpoint(uint8_t _th_setpoint)       { th_setpoint = _th_setpoint; }
   inline void setTempTarget(int16_t _temperature_target){ temperature_target = _temperature_target; }
 
@@ -489,6 +493,7 @@ public:
   int16_t               temperature;    // temperature in 1/10th of Celsius, 0x8000 if unknown
   int16_t               pressure;       // air pressure in hPa, 0xFFFF if unknown
   uint16_t              humidity;       // humidity in percent, 0..100, 0xFF if unknown
+  uint16_t              CO2;            // CO2 in ppm, 0..10000, 0xFF if unknown
   // thermostat
   uint8_t               th_setpoint;    // percentage of heat/cool in percent
   int16_t               temperature_target; // settings for the temparature
