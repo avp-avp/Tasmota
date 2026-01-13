@@ -80,7 +80,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_66_tm1638               | @arendst
 | xdrv_67_mcp23xxx             | @arendst
 | xdrv_68_zerocrossDimmer      | @stefanbode
-| xdrv_69_pca9557              | @cctweaker
+| xdrv_69_pca9557              | @cctweaker, @arendst
 | xdrv_70_1_hdmi_cec           | @s-hadinger
 | xdrv_71_magic_switch         | @barbudor
 | xdrv_72_pipsolar             | @chefpro
@@ -102,7 +102,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_89_                     |
 | xdrv_90_esp32_dingtian_relay | @barbudor
 | xdrv_91_esp32_twai           | @arendst
-| xdrv_92_                     |
+| xdrv_92_vid6608              | @petrows
 | xdrv_93_                     |
 | xdrv_94_                     |
 |                              |
@@ -234,6 +234,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_114_amsx915             | Bastian Urschel
 | xsns_115_wooliis             | Luca Melette
 | xsns_117_c8_co2_5k           | @jeroenvermeulen
+| xsns_118_ags02ma             | Akshaylal S
 |                              |
 | xsns_127_esp32_sensors       | @arendst
 |                              |
