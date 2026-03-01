@@ -3,12 +3,80 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.2.0.2]
+## [15.3.0.1]
+### Added
+- Support for Sensirion SCD43 CO2 sensor
+- I2S full duplex, auto rx sample rate (#24469)
+- Support for Sensirion STCC4 CO2 sensor
+
+### Breaking Changed
+
+### Changed
+- LVGL library from v9.4.0 to v9.5.0 (#24470)
+- Matter improved parameters handling (#24471)
+- Sensirion Core library from v0.6.0 to v0.7.2
+- Sen5x power on delay of 60ms (#24452)
+- SHT1x software reset I2C bus after initial (un)detection
+
+### Fixed
+- Do not free BT memory when in use (#24480)
+- Berry avoid `tasmota.wifi()` returning bad values when wifi is turned off
+
+### Removed
+- Berry `tasmota.urlbecload()` superseded by Extension Manager (#24493)
+
+## [Released]
+
+## [15.3.0]
+- Release Susan
+
+## [15.2.0.6] 20260219
+### Added
+- Support for Sensirion SEN6x indoor air quality sensor (#24386)
+- Support for I2C FM24Cxx FRAM block read/write/format commands (#24457)
+
+### Changed
+- ESP8266 platform update from 2026.01.00 to 2026.02.00 (#24460)
+
+## [15.2.0.5] 20260214
+### Added
+- ESP32 support SPI bus2 for Ethernet and SDCard (#24433)
+- Support for RX8025T RTC (#24445)
+
+### Changed
+- ESP32 Platform from 2025.01.30 to 2026.02.30, Framework (Arduino Core) from v3.1.9 to v3.1.10 and IDF from v5.3.4.251226 to v5.3.4.260127 (#24444)
+
+## [15.2.0.4] 20260212
+### Added
+- Dingtian `SetOption81 1` to invert input and `SetOption133 1` to invert output (#24364)
+- Improv USB CDC connected devices
+
+### Changed
+- Dingtian define `DINGTIAN_INPUTS_INVERTED` replaced by `SetOption81` (#24364)
+
+### Fixed
+- Udisplay SPI driver display dimension parameters regression from v15.1.0.1 (#24376)
+- ESP32 BearSSL hw accelerated SHA1 (#24397)
+
+### Removed
+- AlpineJS 2.8.2 - not needed anymore (#24427)
+
+## [15.2.0.3] 20260124
+### Added
+- Berry `path.listdir("file.tapp#")` to list directory inside '.tapp' archives (#24367)
+
+### Changed
+- ESP8266 platform update from 2025.12.00 to 2026.01.00 (#24354)
+- ESP32 Platform from 2025.12.31 to 2026.01.30, Framework (Arduino Core) from v3.1.8 to v3.1.9 and IDF from v5.3.4.251223 to v5.3.4.251226 (#24354)
+- JPEG decoder (#24368)
+
+### Fixed
+- Display ST77xx and Parallel issues introduced after refactor UDisplay (#24368)
+
+## [15.2.0.2] 20260117
 ### Added
 - Support for Adafruit I2C QT Rotary Encoder (#24270)
 - Zigbee support for `int24` type (#24334)
-
-### Breaking Changed
 
 ### Changed
 - ESP8266 platform update from 2025.10.00 to 2025.12.00 (#24254)
@@ -23,8 +91,7 @@ All notable changes to this project will be documented in this file.
 - ESP8266 KNX unwanted reply (#24267)
 - Zigbee compilation warning in Berry mapping (#24333)
 - ScrubDNS() function (#23886)
-
-### Removed
+- Wireguard crash on RISC-V (esp32c3, esp32c6)
 
 ## [15.2.0.1]
 ### Added
@@ -43,8 +110,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Berry `animate` to be replaced with `animation` framework (#24241)
-
-## [Released]
 
 ## [15.2.0]
 - Release Stephan
