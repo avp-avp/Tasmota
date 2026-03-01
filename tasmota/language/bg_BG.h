@@ -118,6 +118,7 @@
 #define D_GATEWAY "Шлюз"
 #define D_GROUP "Група"
 #define D_HALL_EFFECT "Ефект на Хол"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "Хост"
 #define D_HOSTNAME "Име на хоста"
@@ -541,6 +542,10 @@
 #define D_ENERGY_TODAY "Консумация за днес"
 #define D_ENERGY_YESTERDAY "Консумация за вчера"
 #define D_ENERGY_TOTAL "Консумирано общо"
+
+// xdrv_92_vid6608.ino
+#define D_VID6608_F "VID6608 F"
+#define D_VID6608_CW "VID6608 CW"
 
 // xsns_100_ina3221.ino
 #define  D_UNIT_CHARGE                    "Ah"
@@ -1038,6 +1043,8 @@
 #define D_SENSOR_WOOLIIS_RX    "Wooliis Rx"
 #define D_SENSOR_C8_CO2_5K_RX  "C8-CO2-5K Rx"
 #define D_SENSOR_C8_CO2_5K_TX  "C8-CO2-5K Tx"
+#define D_SENSOR_MKSKYBLU_TX   "MkSkyBlu Tx"
+#define D_SENSOR_MKSKYBLU_RX   "MkSkyBlu Rx"
 
 // Units
 #define D_UNIT_AMPERE "А"

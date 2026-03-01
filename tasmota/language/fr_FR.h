@@ -118,6 +118,7 @@
 #define D_GATEWAY "Passerelle"
 #define D_GROUP "Groupe"
 #define D_HALL_EFFECT "Effet Hall"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "Hôte"
 #define D_HOSTNAME "Nom d'Hôte"
@@ -541,6 +542,10 @@
 #define D_ENERGY_TODAY "Énergie aujourd'hui"
 #define D_ENERGY_YESTERDAY "Énergie hier"
 #define D_ENERGY_TOTAL "Énergie totale"
+
+// xdrv_92_vid6608.ino
+#define D_VID6608_F "VID6608 F"
+#define D_VID6608_CW "VID6608 CW"
 
 // xsns_100_ina3221.ino
 #define  D_UNIT_CHARGE                    "Ah"
@@ -1038,6 +1043,8 @@
 #define D_SENSOR_WOOLIIS_RX    "Wooliis Rx"
 #define D_SENSOR_C8_CO2_5K_RX  "C8-CO2-5K Rx"
 #define D_SENSOR_C8_CO2_5K_TX  "C8-CO2-5K Tx"
+#define D_SENSOR_MKSKYBLU_TX   "MkSkyBlu Tx"
+#define D_SENSOR_MKSKYBLU_RX   "MkSkyBlu Rx"
 
 
 // Units
