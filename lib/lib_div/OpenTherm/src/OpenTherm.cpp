@@ -1,7 +1,21 @@
 /*
-OpenTherm.cpp - OpenTherm Communication Library For Arduino, ESP8266, ESP32
-Copyright 2023, Ihor Melnyk
-*/
+ * OpenTherm Library
+ * Original Author: Ihor Melnyk (https://github.com/ihormelnyk/opentherm_library)
+ * 
+ * Copyright (c) 2019 Ihor Melnyk
+ * MIT License
+ * 
+ * This software is released under the MIT License.
+ * https://opensource.org/licenses/MIT
+ *
+ * ---------------------------------------------
+ * Modifications and improvements by Alex Pavlov
+ * Copyright (c) 2025 Alex Pavlov
+ *
+ * Description of changes:
+ * - Added support for ESP32 RMT peripheral for OpenTherm communication in Arduino environment.
+ *   (https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/rmt.html)
+ */
 
 #include "OpenTherm.h"
 #if !defined(__AVR__)
@@ -39,6 +53,11 @@ void OpenTherm::begin(void (*handleInterruptCallback)(void))
         );
 #endif
     }
+
+#ifdef OPENTHERM_USE_RMT
+    setupRMT();
+#endif
+
     activateBoiler();
     status = OpenThermStatus::READY;
 }
@@ -72,6 +91,18 @@ int IRAM_ATTR OpenTherm::readState()
     return digitalRead(inPin);
 }
 
+#define OT_LOCAL
+#ifdef OT_LOCAL
+void OpenTherm::setActiveState()
+{
+    digitalWrite(outPin, HIGH);
+}
+
+void OpenTherm::setIdleState()
+{
+    digitalWrite(outPin, LOW);
+}
+#else
 void OpenTherm::setActiveState()
 {
     digitalWrite(outPin, LOW);
@@ -81,6 +112,7 @@ void OpenTherm::setIdleState()
 {
     digitalWrite(outPin, HIGH);
 }
+#endif
 
 void OpenTherm::activateBoiler()
 {
@@ -104,6 +136,19 @@ void OpenTherm::sendBit(bool high)
 
 bool OpenTherm::sendRequestAsync(unsigned long request)
 {
+#ifdef OPENTHERM_USE_RMT
+    if (!isReady()) {
+        return false;
+    }
+
+    status = OpenThermStatus::REQUEST_SENDING;
+    response = 0;
+    responseStatus = OpenThermResponseStatus::NONE;
+
+    sendRMT(request);
+    responseTimestamp = micros();
+    status = OpenThermStatus::RESPONSE_WAITING;
+#else
     noInterrupts();
     const bool ready = isReady();
 
@@ -144,6 +189,7 @@ bool OpenTherm::sendRequestAsync(unsigned long request)
     }
 #endif
 
+#endif
     return true;
 }
 
@@ -164,6 +210,11 @@ unsigned long OpenTherm::sendRequest(unsigned long request)
 
 bool OpenTherm::sendResponse(unsigned long request)
 {
+#ifdef OPENTHERM_USE_RMT
+    sendRMT(request);
+    status = OpenThermStatus::READY;
+    return true;
+#else
     noInterrupts();
     const bool ready = isReady();
 
@@ -203,6 +254,7 @@ bool OpenTherm::sendResponse(unsigned long request)
 #endif
 
     return true;
+#endif
 }
 
 unsigned long OpenTherm::getLastResponse()
@@ -299,6 +351,28 @@ void OpenTherm::processResponse()
 
 void OpenTherm::process()
 {
+#ifdef OPENTHERM_USE_RMT
+    if (status == OpenThermStatus::RESPONSE_WAITING)
+    {
+        uint32_t received = receiveRMT();
+        if (received != 0)
+        {
+            response = received;
+            responseStatus = isSlave ?
+                (isValidRequest(response) ? OpenThermResponseStatus::SUCCESS : OpenThermResponseStatus::INVALID) :
+                (isValidResponse(response) ? OpenThermResponseStatus::SUCCESS : OpenThermResponseStatus::INVALID);
+            status = OpenThermStatus::READY;
+            processResponse();
+        }
+        else
+        {
+            responseStatus = OpenThermResponseStatus::TIMEOUT;
+            status = OpenThermStatus::DELAY;
+            responseTimestamp = micros();
+            processResponse();
+        }
+    }
+#else
     noInterrupts();
     OpenThermStatus st = status;
     unsigned long ts = responseTimestamp;
@@ -306,6 +380,7 @@ void OpenTherm::process()
 
     if (st == OpenThermStatus::READY)
         return;
+
     unsigned long newTs = micros();
     if (st != OpenThermStatus::NOT_INITIALIZED && st != OpenThermStatus::DELAY && (newTs - ts) > 1000000)
     {
@@ -332,6 +407,7 @@ void OpenTherm::process()
             status = OpenThermStatus::READY;
         }
     }
+#endif
 }
 
 bool OpenTherm::parity(unsigned long frame) // odd parity
@@ -576,3 +652,158 @@ unsigned char OpenTherm::getFault()
 {
     return ((sendRequest(buildRequest(OpenThermRequestType::READ, OpenThermMessageID::ASFflags, 0)) >> 8) & 0xff);
 }
+
+#ifdef OPENTHERM_USE_RMT
+void OpenTherm::setupRMT() {
+
+    rmt_config_t rmt_tx = {};
+    rmt_tx.rmt_mode = RMT_MODE_TX;
+    rmt_tx.channel = RMT_TX_CHANNEL;
+    rmt_tx.gpio_num = (gpio_num_t)outPin;
+    rmt_tx.clk_div = 80;  // 80 MHz / 80 = 1 MHz → 1 us per tick
+    rmt_tx.mem_block_num = 1;  // 1 block is usually enough for OpenTherm signals
+
+    rmt_tx.tx_config.carrier_en = false;              // No carrier
+    rmt_tx.tx_config.loop_en = false;                 // No loop transmission
+    rmt_tx.tx_config.carrier_freq_hz = 0;             // No carrier frequency
+    rmt_tx.tx_config.carrier_duty_percent = 0;        // No carrier duty cycle
+    rmt_tx.tx_config.carrier_level = RMT_CARRIER_LEVEL_LOW;               // Not used (no carrier)
+#ifdef OT_LOCAL
+    rmt_tx.tx_config.idle_level = RMT_IDLE_LEVEL_LOW;  // Set GPIO low after transmission (matches eot_level = 0 in your IDF example)
+#else   
+    rmt_tx.tx_config.idle_level = RMT_IDLE_LEVEL_HIGH;  // Set GPIO high after transmission (matches eot_level = 1 in your IDF example)
+#endif  
+    rmt_tx.tx_config.idle_output_en = true;           // Keep idle level after transmission
+
+    rmt_config(&rmt_tx);
+    rmt_driver_install(rmt_tx.channel, 0, 0);
+
+    rmt_config_t rmt_rx = {};
+    rmt_rx.rmt_mode = RMT_MODE_RX;
+    rmt_rx.channel = RMT_RX_CHANNEL;
+    rmt_rx.gpio_num = (gpio_num_t)inPin;
+    rmt_rx.clk_div = 80;  // 80 MHz / 80 = 1 MHz → 1 us per tick
+    rmt_rx.mem_block_num = 1;
+
+    rmt_rx.rx_config.filter_en = true;
+    // Minimum valid signal duration: 200 us → 200 ticks
+    rmt_rx.rx_config.filter_ticks_thresh = 200;
+
+    // Maximum signal duration: 2 ms → 2000 ticks
+    rmt_rx.rx_config.idle_threshold = 2000;
+
+    rmt_config(&rmt_rx);
+    rmt_driver_install(rmt_rx.channel, 1000, 0);
+}
+
+void OpenTherm::sendRMT(uint32_t data) {
+    constexpr int BITS = 34;  // 1 start bit + 32 data bits + 1 stop bit
+    rmt_item32_t items[BITS];
+
+    for (int i = 0; i < BITS; ++i) {
+        bool bit;
+        if (i == 0 || i >= BITS - 1) {
+            bit = true;  // Start and Stop bits are always '1'
+        } else {
+            bit = (data >> (BITS - 2 - i)) & 1;
+        }
+
+        if (bit) {
+            // Manchester encoding: '1' is high then low
+            items[i].level0 = 1;
+            items[i].duration0 = 500;  // 500 us high
+            items[i].level1 = 0;
+            items[i].duration1 = 500;  // 500 us low
+        } else {
+            // Manchester encoding: '0' is low then high
+            items[i].level0 = 0;
+            items[i].duration0 = 500;  // 500 us low
+            items[i].level1 = 1;
+            items[i].duration1 = 500;  // 500 us high
+        }
+    }
+
+    // Transmit the Manchester encoded message
+    rmt_write_items(RMT_TX_CHANNEL, items, BITS, true);  // true = wait for transmission to finish
+    rmt_wait_tx_done(RMT_TX_CHANNEL, portMAX_DELAY);
+}
+
+bool OpenTherm::addManchesterHalfBit(bool signal){
+    if (insideManchesterBit) {
+        if (signal==lastManchesterSignal){
+            status = OpenThermStatus::RESPONSE_INVALID;
+            responseTimestamp = micros();
+            return false;
+        } else {
+            response = (response << 1) | lastManchesterSignal;
+            responseTimestamp = micros();
+            responseBitIndex = responseBitIndex + 1;
+            insideManchesterBit = false;
+        }
+    }
+    else 
+    {
+        lastManchesterSignal = signal;
+        insideManchesterBit = true;
+    }
+
+    if (responseBitIndex==33) {
+        status = OpenThermStatus::RESPONSE_READY;
+        responseTimestamp = micros();
+        return false;
+    }
+
+    return true;
+}
+
+bool OpenTherm::addManchesterSignal(bool signal, uint32_t duration)
+{
+    constexpr int TOLERANCE = 100; // +/- tolerance for pulse width
+    constexpr int HALF_BIT_US = 500;
+
+    if (duration>HALF_BIT_US-TOLERANCE && duration<HALF_BIT_US+TOLERANCE){
+        return addManchesterHalfBit(signal);
+    }
+    else if (duration>2*HALF_BIT_US-TOLERANCE && duration<2*HALF_BIT_US+TOLERANCE){
+        if (!addManchesterHalfBit(signal)) return false;
+        return addManchesterHalfBit(signal);
+    } 
+    else {
+        status = OpenThermStatus::RESPONSE_INVALID;
+        responseTimestamp = micros();
+        return false;
+    }
+}
+
+
+uint32_t OpenTherm::receiveRMT() {
+    constexpr int MAX_BITS = 64;    
+    rmt_item32_t* items = nullptr;
+    size_t length = 0;
+    RingbufHandle_t rb = nullptr;
+
+    rmt_get_ringbuf_handle(RMT_RX_CHANNEL, &rb);
+    if (!rb) return 0;
+    rmt_rx_start(RMT_RX_CHANNEL, true);
+
+    items = (rmt_item32_t*)xRingbufferReceive(rb, &length, pdMS_TO_TICKS(100));
+    if (!items) return 0;
+
+    vRingbufferReturnItem(rb, items);
+
+    if (status == OpenThermStatus::RESPONSE_READY) {
+        if (isValidResponse(response)) {
+            status = OpenThermStatus::READY;
+            return response;
+        } else {
+            status = OpenThermStatus::RESPONSE_INVALID;
+            responseTimestamp = micros();
+        }
+    } else if (status == OpenThermStatus::RESPONSE_INVALID) {
+        responseTimestamp = micros();
+    }
+
+    return 0;
+}
+
+#endif
