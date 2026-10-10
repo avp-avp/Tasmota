@@ -11,6 +11,8 @@ if !global.lds02Nodes      # data survive to decoder reload
 end
 
 class LwDecoLDS02
+  static var hashCheck = false
+
   static def decodeUplink(Name, Node, RSSI, FPort, Bytes)
     var data = {"Device":"Dragino LDS02"}
 
@@ -76,7 +78,7 @@ class LwDecoLDS02
       var door_open = sensor[6]
       var door_open_last_seen = sensor[7]
       msg += "<tr class='htr'><td colspan='4'>&#9478;"                      # |
-      msg += string.format(" %s %s", (door_open) ? "&#x1F513" : "&#x1F512", # Open or Closed lock - Door
+      msg += string.format(" %s %s", (door_open) ? "&#x1F513;" : "&#x1F512;", # Open or Closed lock - Door
                                      lwdecode.dhm(door_open_last_seen))
       msg += "{e}"                                                          # = </td></tr>
     end

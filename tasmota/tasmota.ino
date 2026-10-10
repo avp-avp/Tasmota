@@ -52,9 +52,11 @@
 #include <ext_printf.h>
 #include <SBuffer.hpp>
 #include <LList.h>
+#include <PubSubClient.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
 #ifdef ESP8266
+#include "sntp.h"                           // To disable sntp using UDP for NTP updates
 #ifdef USE_ARDUINO_OTA
 #include <ArduinoOTA.h>                     // Arduino OTA
 #ifndef USE_DISCOVERY
@@ -191,6 +193,10 @@ struct TIME_T {
   uint32_t      valid;
 } RtcTime;
 
+#if MQTT_VERSION == MQTT_VERSION_5_0
+struct MqttCommandContext;
+#endif
+
 struct XDRVMAILBOX {
   bool          grpflg;
   bool          usridx;
@@ -201,6 +207,9 @@ struct XDRVMAILBOX {
   char         *topic;
   char         *data;
   char         *command;
+#if MQTT_VERSION == MQTT_VERSION_5_0
+  const MqttCommandContext *mqtt_context;
+#endif
 } XdrvMailbox;
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
@@ -315,7 +324,7 @@ struct TasmotaGlobal_t {
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
-  bool i2c_enabled[2];                      // I2C configured for all possible buses (1 or 2)
+  bool i2c_enabled[2];                      // I2C configured for all possible buses (1 or 2) - MAX_I2C
 #ifdef ESP32
   bool camera_initialized;                  // For esp32-webcam, to be used in discovery
   bool ota_factory;                         // Select safeboot binary
@@ -475,7 +484,7 @@ void setup(void) {
 
   if (RtcSettingsLoad(0)) {
     uint32_t baudrate = (RtcSettings.baudrate / 300) * 300;  // Make it a valid baudrate
-    if (baudrate) { TasmotaGlobal.baudrate = baudrate; }
+    if (baudrate) { SetTasmotaGlobalBaudrate(baudrate); }
   }
 
   // Init settings and logging preparing for AddLog use
@@ -512,6 +521,11 @@ void setup(void) {
   is_connected_to_USB = true;      // S2
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
 
+  // Detect if esp-emu, if so disable CDC
+  if (WiFiHelper::macAddress().equals("24:0A:C4:00:00:01")) {
+    is_connected_to_USB = false;
+  }
+
   if (is_connected_to_USB) {
     // TasConsole is already running
 #if !ARDUINO_USB_MODE
@@ -522,6 +536,12 @@ void setup(void) {
   } else {
 #if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
     HWCDCSerial.~HWCDC();       // not needed, deinit CDC
+    // HWCDC::deinit() leaves USB D-/D+ as OUTPUT_OPEN_DRAIN driven LOW (forces host re-enumeration)
+    // No host detected so re-enumeration is not needed: release the pins to high impedance
+    // GPIO_MODE_DISABLE clears output, input and open-drain, so GPIO matrix peripherals (LEDC, RMT...)
+    // can later drive these pins in push-pull mode. Not gpio_reset_pin(): it enables the pull-up on D+
+    gpio_set_direction((gpio_num_t)USB_INT_PHY0_DM_GPIO_NUM, GPIO_MODE_DISABLE);
+    gpio_set_direction((gpio_num_t)USB_INT_PHY0_DP_GPIO_NUM, GPIO_MODE_DISABLE);
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
     // Init command serial console preparing for AddLog use
     Serial.begin(TasmotaGlobal.baudrate);
@@ -616,6 +636,9 @@ void setup(void) {
 #ifndef USE_EMULATION_HUE
   if (EMUL_HUE == Settings->flag2.emulation) { Settings->flag2.emulation = 0; }
 #endif  // USE_EMULATION_HUE
+#ifndef USE_EMULATION_SHELLY
+  if (EMUL_SHELLY == Settings->flag2.emulation) { Settings->flag2.emulation = 0; }
+#endif  // USE_EMULATION_SHELLY
 #endif  // USE_EMULATION
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("DBG: TasmotaGlobal size %d, data %100_H"), sizeof(TasmotaGlobal), (uint8_t*)&TasmotaGlobal);
@@ -675,8 +698,22 @@ void setup(void) {
 
   Format(TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(TasmotaGlobal.mqtt_topic));
   if (strchr(SettingsText(SET_HOSTNAME), '%') != nullptr) {
+    // If hostname in Settings contains % (a format specifier), then reset hostname to WIFI_HOSTNAME from tasmota_globals.h
+    // and then expand the string.
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
-    snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
+    const char* first_spec = strchr(SettingsText(SET_HOSTNAME), '%');
+    const char* second_spec = strchr(first_spec + 1, '%');
+    bool use_topic_only = (first_spec && !second_spec && ('s' == *(first_spec +1)));  // #24731 Backward compatibility to undocumented single specifier "%s"
+    if (use_topic_only || (first_spec && second_spec)) {
+      // Two (or more) specifiers: expands first as mqtt topic and second as chip ID
+      // In C, the extra argument is safely ignored by the compiler and runtime.
+      // The function reads the format string, sees one specifier, grabs the first matching argument from the stack,
+      // and prints it. The second argument is simply left untouched in memory.
+      snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
+    } else {
+      // One specifier: use Format() which handles %NX = last N MAC hex chars, %Nd = short chip ID dec, %d = full chip ID dec
+      Format(TasmotaGlobal.hostname, SettingsText(SET_HOSTNAME), sizeof(TasmotaGlobal.hostname)-1);
+    }
   } else {
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }
@@ -736,10 +773,6 @@ void BacklogLoop(void) {
       do {
         char* cmd = *backlog.head();
         backlog.removeHead();
-/*
-        // This adds 32 bytes
-        char* cmd = *backlog.removeHead();
-*/
         if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
           free(cmd);
           nodelay = true;

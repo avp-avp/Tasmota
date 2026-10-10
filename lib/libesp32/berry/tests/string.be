@@ -132,6 +132,9 @@ assert(string.format("%i", true) == '1')
 assert(string.format("%i", false) == '0')
 
 assert(string.format("%c", a) == '*')
+# %c must honor field width and flags, like the other conversions
+assert(string.format("%5c", 65) == '    A')
+assert(string.format("%-5c", 65) == 'A    ')
 
 assert(string.format("%f", 3.5) == '3.500000')
 assert(string.format("%f", 3) == '3.000000')
@@ -150,7 +153,7 @@ assert(string.format("%s", false) == 'false')
 assert(string.format("%q", "\ntest") == '\'\\ntest\'')
 
 # corrupt format string should not crash the VM
-string.format("%0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f", 3.5)
+assert(string.format("%0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f", 3.5) == '3.500000')
 
 # format is now synonym to string.format
 assert(format == string.format)

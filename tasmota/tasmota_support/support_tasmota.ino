@@ -616,10 +616,9 @@ void SetPulseTimer(uint32_t index, uint32_t time)
 
 uint32_t GetPulseTimer(uint32_t index)
 {
-  long time = TimePassedSince(TasmotaGlobal.pulse_timer[index]);
-  if (time < 0) {
-    time *= -1;
-    return (time > 11100) ? (time / 1000) + 100 : (time > 0) ? time / 100 : 0;
+  int32_t time = -TimePassedSince(TasmotaGlobal.pulse_timer[index]);
+  if (TasmotaGlobal.pulse_timer[index] && time > 0) {
+      return (time > 11100) ? (time / 1000) + 100 : time / 100;
   }
   return 0;
 }
@@ -1127,6 +1126,12 @@ void MqttPublishTeleperiodSensor(void) {
 void PerformEverySecond(void)
 {
   TasmotaGlobal.uptime++;
+
+#ifdef ESP8266
+#ifdef USE_ESP8266_DEBUG_HEAP
+  ESP_HeapUsageUpdate();
+#endif  // USE_ESP8266_DEBUG_HEAP
+#endif  // ESP8266
 
   if (POWER_CYCLE_TIME == TasmotaGlobal.uptime) {
     UpdateQuickPowerCycle(false);
@@ -1872,6 +1877,11 @@ void SerialInput(void) {
           serial_buffer_overrun = true;                                            // Signal overrun but continue reading input to flush until '\n' (EOL)
         }
       }
+#ifdef USE_SERIAL_BACKSPACE
+      else if (TasmotaGlobal.serial_in_byte == 0x08 && TasmotaGlobal.serial_in_byte_counter > 0) { // Backspace (BS) - remove last char from buffer
+        TasmotaGlobal.serial_in_byte_counter--;
+      }
+#endif  // USE_SERIAL_BACKSPACE
     } else {
       if (TasmotaGlobal.serial_in_byte || Settings->flag.mqtt_serial_raw) {        // Any char between 1 and 127 or any char (0 - 255) - CMND_SERIALSEND3
         bool in_byte_is_delimiter =                                                // Char is delimiter when...
@@ -1992,6 +2002,11 @@ void TasConsoleInput(void) {
     if (XYZModemStart(TXMP_TASCONSOLE, console_in_byte)) { return; }
 #endif  // USE_XYZMODEM
 
+#ifdef USE_SERIAL_BACKSPACE
+    if (console_in_byte == 0x08 && console_buffer.length() > 0) { // Backspace (BS) - remove last char from buffer
+      console_buffer.remove(console_buffer.length() - 1);
+    } else
+#endif  // USE_SERIAL_BACKSPACE
     if (isprint(console_in_byte)) {                       // Any char between 32 and 127
       if (console_buffer.length() < INPUT_BUFFER_SIZE) {  // Add char to string if it still fits
         console_buffer += console_in_byte;
@@ -2191,6 +2206,25 @@ void GpioInit(void)
   SetSerialSwap();
 #endif
 
+#if defined(ESP32) && defined(USE_USB_CDC_CONSOLE)
+  // The command console falls back to UART0 when no USB host is detected at boot
+  // (see tasmota.ino, "Fall back to serial port"). On SoCs whose default UART0 pins
+  // are ordinary GPIOs (ESP32-S3 43/44, C3/C6 20/21) a template may assign them to
+  // another function. UART0 keeps driving those pads, which silently corrupts that
+  // function, so release the console rather than the pins.
+  if (tasconsole_serial &&
+      (TasmotaGlobal.gpio_pin[(uint32_t)SOC_TX0] || TasmotaGlobal.gpio_pin[(uint32_t)SOC_RX0])) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CMD: Serial console released, GPIO%d/GPIO%d used by template"),
+           (int)SOC_TX0, (int)SOC_RX0);
+    TasmotaGlobal.seriallog_level = 0;    // Stop logging to a console that is about to go away
+    Settings->seriallog_level = 0;
+    Serial.flush();
+    Serial.end();                         // Detaches the pads so the template function owns them
+    TasConsole = Serial;                  // Refresh the copy, it must not point at a released UART
+    tasconsole_serial = false;
+  }
+#endif  // ESP32 && USE_USB_CDC_CONSOLE
+
   uint32_t sspi_mosi = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MOSI)) ? SPI_MOSI : SPI_NONE;
   uint32_t sspi_miso = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MISO)) ? SPI_MISO : SPI_NONE;
   TasmotaGlobal.soft_spi_enabled = sspi_mosi + sspi_miso;
@@ -2298,17 +2332,17 @@ void GpioInit(void)
   }
 
   if (Settings->param[P_POWER_ON_DELAY]) {                 // SetOption46 - Allow Wemos D1 power to stabilize before starting I2C polling for devices powered locally
-    uint32_t init_delay = Settings->param[P_POWER_ON_DELAY] * 10;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO46 Wait %d msec"), init_delay);
+    uint32_t init_delay = Settings->param[P_POWER_ON_DELAY] * 10;     // 1 .. 200 = 10 .. 2000 msec delay
+    if (Settings->param[P_POWER_ON_DELAY] > 200) {                 
+      init_delay = (Settings->param[P_POWER_ON_DELAY] - 200) * 1000;  // 201 .. 255 = 1 .. 55 seconds delay for devices like DALI gear to become ready
+    }
+    float fdelay = (float)init_delay * 0.001f;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO46 Wait %3_f sec"), &fdelay);
     delay(init_delay);
   }
 
 #ifdef USE_I2C
-  uint32_t max_bus = 1;
-#ifdef USE_I2C_BUS2
-  max_bus = 2;
-#endif  // USE_I2C_BUS2
-  for (uint32_t bus = 0; bus < max_bus; bus++) {
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
     if (PinUsed(GPIO_I2C_SCL, bus) && PinUsed(GPIO_I2C_SDA, bus)) {
       if (I2cBegin(Pin(GPIO_I2C_SDA, bus), Pin(GPIO_I2C_SCL, bus), bus)) {
         TasmotaGlobal.i2c_enabled[bus] = true;

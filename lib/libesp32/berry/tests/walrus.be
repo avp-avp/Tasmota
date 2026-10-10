@@ -72,10 +72,39 @@ var ins = confused_walrus()
 assert(ins.f() == ins)
 
 # Check overwriting a builtin (https://github.com/berry-lang/berry/issues/416)
+# `:=` never creates a variable, so it cannot create a local shadowing a builtin
+import string
+def walrus_create_error(c)
+    try
+        compile(c)
+    except 'syntax_error' as e, m
+        return string.find(m, "cannot create variable 'print' with ':='") >= 0
+    end
+    return false
+end
+assert(walrus_create_error("def f() print := 1 end"))
 
+# a local declared with `var` can still shadow the builtin
 def check_overwrite_builtin()
+    var print
     print := 1
     assert(print == 1)
 end
 
 check_overwrite_builtin()
+
+# Bug when dereferencing in a walrus
+class Test_walrus_member
+    var a
+    def init()
+        self.a = 2
+    end
+    def f()
+        var v
+        if (v := self.a) != nil         # here is where the bug happens
+            return v                    # 'v' would have a wrong value
+        end
+    end
+end
+var t = Test_walrus_member()
+assert(t.f() == 2)

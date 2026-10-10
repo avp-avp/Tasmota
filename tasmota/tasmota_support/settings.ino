@@ -1093,6 +1093,8 @@ void SettingsDefaultSet2(void) {
   ParseIPv4(&Settings->ipv4_rgx_subnetmask, PSTR(WIFI_RGX_SUBNETMASK));
   Settings->sta_config = WIFI_CONFIG_TOOL;
 //  Settings->sta_active = 0;
+  SettingsUpdateText(SET_APBSSID1, PSTR(AP_BSSID1));
+  SettingsUpdateText(SET_APBSSID2, PSTR(AP_BSSID2));
   SettingsUpdateText(SET_STASSID1, PSTR(STA_SSID1));
   SettingsUpdateText(SET_STASSID2, PSTR(STA_SSID2));
   SettingsUpdateText(SET_STAPWD1, PSTR(STA_PASS1));
@@ -1126,9 +1128,7 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText(SET_WEBPWD, PSTR(WEB_PASSWORD));
   SettingsUpdateText(SET_CORS, PSTR(CORS_DOMAIN));
 #ifdef DISABLE_REFERER_CHK
-  flag5.disable_referer_chk |= false;
-#else
-  flag5.disable_referer_chk |= true;
+  flag5.disable_referer_chk |= 1;
 #endif
 
   // Button
@@ -1727,9 +1727,9 @@ void SettingsDelta(void) {
     }
     if (Settings->version < 0x09050007) {
 #ifdef DISABLE_REFERER_CHK
-      Settings->flag5.disable_referer_chk |= false;
+      Settings->flag5.disable_referer_chk = 1;
 #else
-      Settings->flag5.disable_referer_chk |= true;
+      Settings->flag5.disable_referer_chk = 0;
 #endif
     }
     if (Settings->version < 0x09050009) {  // 9.5.0.9
@@ -1907,6 +1907,15 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0F020006) {  // 15.2.0.6
       Settings->i2c_drivers2[0] = I2CDRIVERS_96_127;
       Settings->i2c_drivers2[1] = I2CDRIVERS_128_159;
+    }
+    // Split of EnableEndStopTime into OpenEndStopTime and CloseEndStopTime flags
+    if (Settings->version < 0x0F060002) {  // 15.6.0.2
+      // ESP8266 Shutter driver (data always exposed, but otherwise unused)
+      for (size_t shutter_idx = 0; shutter_idx < MAX_SHUTTERS; shutter_idx++) {
+        if (Settings->shutter_options[shutter_idx] & 4) {
+          Settings->shutter_options[shutter_idx] |= 16;
+        }
+      }
     }
 
     Settings->version = TASMOTA_VERSION;

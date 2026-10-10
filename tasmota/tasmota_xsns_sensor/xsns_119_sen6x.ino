@@ -162,15 +162,17 @@ bool CmndSen6xError(int error) {
 
 void Sen6xInit(void) {
   PowerOnDelay(110);  // Sensor startup time (Time after power-on until I2C communication can be started)
-  for (uint32_t bus = 0; bus < 2; bus++) {
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
     if (!I2cSetDevice(SEN6X_I2C_ADDR_6B, bus)) { 
 //      Sen6xError("Scan", bus +1);
       continue;
     }
     sen6x.begin(I2cGetWire(bus), SEN6X_I2C_ADDR_6B);
 
-    if (Sen6xError("Reset", sen6x.deviceReset())) {   // Performs delay(1200) if no error
-      continue;
+    if (sen6x.deviceReset()) {                        // Performs delay(1200) if no error
+      if (Sen6xError("Reset", sen6x.deviceReset())) { // See https://github.com/arendst/Tasmota/discussions/24452
+        continue;
+      }
     }
 
     uint8_t major;

@@ -75,12 +75,12 @@ TasmotaSerial *ShdSerial = nullptr;
 
 typedef struct
 {
-    uint8_t version_major = 0;
-    uint8_t version_minor = 0;
+    uint8_t version_major;
+    uint8_t version_minor;
 
-    uint32_t brightness = 0;
-    uint32_t power = 0;
-    uint32_t fade_rate = 0;
+    uint32_t brightness;
+    uint32_t power;
+    uint32_t fade_rate;
 } SHD_DIMMER;
 
 struct SHD
@@ -273,8 +273,8 @@ bool ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
 
     while (retries--)
     {
-        ShdSerial->write(data, len);
         ShdSerial->flush();
+        ShdSerial->write(data, len);
 
         // wait for any response
         uint32_t snd_time = millis() + SHD_ACK_TIMEOUT;

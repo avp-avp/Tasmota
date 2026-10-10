@@ -23,6 +23,7 @@
 from genericpath import exists
 import os
 from os.path import join, getsize
+import re
 import csv
 from littlefs import LittleFS
 import requests
@@ -139,9 +140,15 @@ def esp32_build_filesystem(fs_size):
         print(Fore.GREEN + "Will create filesystem with the following file(s):")
         print()
     for file in files:
+        # Remove leading and trailing whitespace, ignore empty lines
+        file = file.strip()
+        if not file:
+            continue
+
         if "no_files" in file:
             continue
-        if "http" and "://" in file:
+        # Remote URL
+        if file.startswith(("http://", "https://")):
             response = requests.get(file.split(" ")[0])
             if response.ok:
                 target = os.path.normpath(join(filesystem_dir, file.split(os.path.sep)[-1]))
@@ -154,6 +161,8 @@ def esp32_build_filesystem(fs_size):
             else:
                 print(Fore.RED + "Failed to download: ",file)
             continue
+        # Local path (relative to PROJECT_DIR or absolute)
+        file = file if os.path.isabs(file) else os.path.normpath(join(env.subst("$PROJECT_DIR"), file))
         if os.path.isdir(file):
             print(f"{file}/ (directory)")
             shutil.copytree(file, filesystem_dir, dirs_exist_ok=True)
@@ -214,22 +223,35 @@ def esp32_fetch_safeboot_bin(tasmota_platform):
     safeboot_fw_url = "http://ota.tasmota.com/tasmota32/release/" + tasmota_platform + "-safeboot.bin"
     safeboot_fw_name = os.path.normpath(join(variants_dir, tasmota_platform + "-safeboot.bin"))
     if(exists(safeboot_fw_name)):
-        print(Fore.GREEN + "Safeboot binary already in place")
-        return True
+        try:
+            with open(safeboot_fw_name, "rb") as safeboot_file:
+                if safeboot_file.read(1) == b"\xE9":
+                    print(Fore.GREEN + "Safeboot binary already in place")
+                    return True
+        except OSError:
+            pass
+        print(Fore.YELLOW + "Existing safeboot file is not a valid ESP firmware image; downloading a replacement")
     print()
     print(Fore.GREEN + "Will download safeboot binary from URL:")
     print(Fore.BLUE + safeboot_fw_url)
     try:
         response = requests.get(safeboot_fw_url)
-        open(safeboot_fw_name, "wb").write(response.content)
-        print(Fore.GREEN + "Safeboot binary written to variants path:")
-        print(Fore.BLUE + safeboot_fw_name)
-        return True
-    except:
-        print(Fore.RED + "Download of safeboot binary failed. Please check your Internet connection.")
-        print(Fore.RED + "Creation of " + tasmota_platform + "-factory.bin not possible")
-        print(Fore.YELLOW + "Without Internet " + Fore.GREEN + tasmota_platform + "-safeboot.bin" + Fore.YELLOW + " needs to be compiled before " + Fore.GREEN + tasmota_platform)
-        return False
+        if not response.ok:
+            print(Fore.RED + "Safeboot download failed with HTTP status", response.status_code)
+        elif not response.content.startswith(b"\xE9"):
+            print(Fore.RED + "Downloaded file is not a valid ESP firmware image")
+        else:
+            with open(safeboot_fw_name, "wb") as safeboot_file:
+                safeboot_file.write(response.content)
+            print(Fore.GREEN + "Safeboot binary written to variants path:")
+            print(Fore.BLUE + safeboot_fw_name)
+            return True
+    except Exception:
+        pass
+    print(Fore.RED + "Download of safeboot binary failed. Please check your Internet connection.")
+    print(Fore.RED + "Creation of " + tasmota_platform + "-factory.bin not possible")
+    print(Fore.YELLOW + "Without download from Internet " + Fore.GREEN + tasmota_platform + "-safeboot.bin" + Fore.YELLOW + " needs to be compiled before " + Fore.GREEN + tasmota_platform)
+    return False
 
 def esp32_copy_new_safeboot_bin(tasmota_platform,new_local_safeboot_fw):
     print("Copy new local safeboot firmware to variants dir -> using it for further flashing operations")
@@ -307,13 +329,22 @@ def esp32_create_combined_bin(source, target, env):
             "--flash-size",
             flash_size,
         ]
-        # platformio estimates the flash space used to store the firmware.
-        # the estimation is inaccurate. perform a final check on the firmware
-        # size by comparing it against the partition size.
+        # Platformio estimates the flash space used to store the firmware.
+        # The estimation is inaccurate. Get the exact firmware flash usage
+        # from the size tool (same value as PlatformIO's "Flash:" line)
         max_size = env.BoardConfig().get("upload.maximum_size", 1)
-        fw_size = getsize(firmware_name)
+        elf_file = os.path.normpath(env.subst("$BUILD_DIR/${PROGNAME}.elf"))
+        fw_size = 0
+        size_cmd = env.subst("$SIZETOOL") + " -A -d " + elf_file
+        size_output = subprocess.check_output(size_cmd, shell=True, text=True)
+        size_regexp = re.compile(env.get("SIZEPROGREGEXP"))
+        for line in size_output.splitlines():
+            m = size_regexp.match(line)
+            if m:
+                fw_size += int(m.group(1))
         if (fw_size > max_size):
-            raise Exception(Fore.RED + "firmware binary too large: %d > %d" % (fw_size, max_size))
+            print(Fore.RED + "firmware binary too large: %d > %d" % (fw_size, max_size))
+            exit(1)
 
         print()
         print("    Offset   | File")

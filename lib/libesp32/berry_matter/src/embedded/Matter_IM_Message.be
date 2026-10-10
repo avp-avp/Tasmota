@@ -130,9 +130,11 @@ class Matter_IM_Message
     var data_raw = self.data.to_TLV().tlv2raw()    # payload in cleartext
     resp.encode_frame(data_raw)    # payload in cleartext
     resp.encrypt()
+#if USE_BERRY_DEBUG
     if tasmota.loglevel(4)
       log(f"MTR: <snd       ({resp.session.local_session_id:6i}) id={resp.message_counter} exch={resp.exchange_id} rack={resp.ack_message_counter}", 4)
     end
+#endif
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
     self.finishing = true              # we wait for final ack
@@ -391,7 +393,7 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
     end
     # InteractionModelRevision
     raw.add(0x24FF, -2)               # add 24FF
-    raw.add(0x0C, 1)                    # add 0C - InteractionModelRevision 12 (Matter 1.4+)
+    raw.add(0x0D, 1)                    # InteractionModelRevision 13
     # close struct ReportDataMessage
     raw.add(0x18, 1)                  # add 18
     # log(f">>>: {raw.tohex()}", 3)
@@ -502,9 +504,10 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
     if self.report_data_phase
       return super(self).status_ok_received(msg)
     else
-      self.sub.re_arm()                       # always re_arm at last StatusReport. The only case where it does not happen is during keep-alive, hence we need to lookg for Ack (see above)
-      super(self).status_ok_received(nil)
-      return false                            # let the caller to the ack
+      self.sub.re_arm()                       # the final StatusResponse completes this report
+      self.finished = true
+      self.ready = false
+      return false                            # let the caller acknowledge the StatusResponse
     end
   end
 
@@ -523,15 +526,18 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
         # ReportData is finished
         self.report_data_phase = false
         self.ready = false
+        self.finishing = false                    # wait for StatusResponse, not a transport ACK
         self.finished = false                     # while a ReadReport would stop here, we continue for subscription
       else
         # send a simple ACK
         var resp = self.resp.build_standalone_ack(false)
         resp.encode_frame()
         resp.encrypt()
+#if USE_BERRY_DEBUG
         if tasmota.loglevel(4)
           log(format("MTR: <Ack       (%6i) ack=%i id=%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 4)
         end
+#endif
         responder.send_response_frame(resp)
         self.last_counter = resp.message_counter
         # self.finished = true
@@ -539,10 +545,12 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
       end
 
     else
-      # simple heartbeat ReportData
+      # empty subscription report still requires a StatusResponse
       if self.report_data_phase
         super(self).send_im(responder)
         self.report_data_phase = false
+        self.finishing = false
+        self.ready = false
       else
         # self.finished = true
         self.sub.re_arm()           # signal that we can proceed to next sub report
