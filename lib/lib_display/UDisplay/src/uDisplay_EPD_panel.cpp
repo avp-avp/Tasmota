@@ -365,80 +365,87 @@ bool EPDPanel::updateFrame() {
 }
 
 // ===== ep_mode 2 Support (5-LUT mode) =====
+// UC81xx / IL0398 / IL91874 latch every byte on CS: toggle CS per byte,
+// as the pre-refactor driver did (spi_command_EPD / spi_data8_EPD)
+
+static inline void epd_cmd(SPIController* s, uint8_t c) {
+    s->csLow();
+    s->writeCommand(c);
+    s->csHigh();
+}
+
+static inline void epd_data(SPIController* s, uint8_t d) {
+    s->csLow();
+    s->writeData8(d);
+    s->csHigh();
+}
 
 void EPDPanel::setLuts() {
     if (!cfg.lut_array || !cfg.lut_cnt) return;
-    
+
+    spi->beginTransaction();
     for (uint8_t index = 0; index < 5; index++) {
         if (cfg.lut_cmd[index] == 0 || !cfg.lut_array[index]) continue;
-        
-        spi->beginTransaction();
-        spi->csLow();
-        spi->writeCommand(cfg.lut_cmd[index]);
+        epd_cmd(spi, cfg.lut_cmd[index]);
         for (uint8_t count = 0; count < cfg.lut_cnt[index]; count++) {
-            spi->writeData8(cfg.lut_array[index][count]);
+            epd_data(spi, cfg.lut_array[index][count]);
         }
-        spi->csHigh();
-        spi->endTransaction();
     }
+    spi->endTransaction();
 }
 
 void EPDPanel::clearFrame_42() {
+    const uint32_t plane_bytes = (uint32_t)(cfg.width / 8) * cfg.height;
+
     spi->beginTransaction();
-    spi->csLow();
-    
-    spi->writeCommand(cfg.saw_1);
-    for (uint16_t j = 0; j < cfg.height; j++) {
-        for (uint16_t i = 0; i < cfg.width; i++) {
-            spi->writeData8(0xFF);
-        }
+    epd_cmd(spi, cfg.saw_1);
+    for (uint32_t i = 0; i < plane_bytes; i++) {
+        epd_data(spi, cfg.saw_1_fill);
     }
-
-    spi->writeCommand(cfg.saw_2);
-    for (uint16_t j = 0; j < cfg.height; j++) {
-        for (uint16_t i = 0; i < cfg.width; i++) {
-            spi->writeData8(0xFF);
-        }
+    // cleared framebuffer is all 0, so the saw_2 plane gets 0 ^ xor
+    epd_cmd(spi, cfg.saw_2);
+    for (uint32_t i = 0; i < plane_bytes; i++) {
+        epd_data(spi, cfg.saw_2_xor);
     }
-
-    spi->writeCommand(cfg.saw_3);
-    spi->csHigh();
+    epd_cmd(spi, cfg.saw_3);
     spi->endTransaction();
-    
+
     delay_sync(100);
 }
 
 void EPDPanel::displayFrame_42() {
+    const uint32_t plane_bytes = (uint32_t)(cfg.width / 8) * cfg.height;
+
     spi->beginTransaction();
-    spi->csLow();
-    
-    spi->writeCommand(cfg.saw_1);
-    for(int i = 0; i < cfg.width / 8 * cfg.height; i++) {
-        spi->writeData8(0xFF);
+    epd_cmd(spi, cfg.saw_1);
+    for (uint32_t i = 0; i < plane_bytes; i++) {
+        epd_data(spi, cfg.saw_1_fill);
     }
-    
-    spi->csHigh();
     spi->endTransaction();
     delay(2);
 
     spi->beginTransaction();
-    spi->csLow();
-    spi->writeCommand(cfg.saw_2);
-    for(int i = 0; i < cfg.width / 8 * cfg.height; i++) {
-        spi->writeData8(fb_buffer[i] ^ 0xff);
+    epd_cmd(spi, cfg.saw_2);
+    // framebuffer is Y-column (fb[x + (y/8)*width], bit y&7); controller wants X-rows, MSB = leftmost
+    for (uint16_t row = 0; row < cfg.height; row++) {
+        for (uint16_t x_byte = 0; x_byte < cfg.width / 8; x_byte++) {
+            uint8_t byte_out = 0;
+            for (uint8_t bit = 0; bit < 8; bit++) {
+                uint16_t x = x_byte * 8 + bit;
+                if ((fb_buffer[x + (row / 8) * cfg.width] >> (row & 7)) & 1) byte_out |= (0x80 >> bit);
+            }
+            epd_data(spi, byte_out ^ cfg.saw_2_xor);
+        }
     }
-    spi->csHigh();
     spi->endTransaction();
     delay(2);
 
     setLuts();
 
     spi->beginTransaction();
-    spi->csLow();
-    spi->writeCommand(cfg.saw_3);
-    spi->csHigh();
+    epd_cmd(spi, cfg.saw_3);
     spi->endTransaction();
-    
+
     delay_sync(100);
 }
 

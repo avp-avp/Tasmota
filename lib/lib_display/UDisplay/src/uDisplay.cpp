@@ -68,6 +68,8 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   col_mode = 16;
   sa_mode = 16;
   saw_3 = 0xff;
+  ep_fill1 = 0xff;
+  ep_xor2 = 0xff;
   dim_op = 0xff;
   bp_mode.data = 0;
   dsp_off = 0xff;
@@ -698,10 +700,16 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case 'a':
             if (interface == _UDSP_SPI) {
-              // Parse directly into SPI config
-              panel_config->spi.cmd_set_addr_x = next_hex(&lp1);
-              panel_config->spi.cmd_set_addr_y = next_hex(&lp1);
-              panel_config->spi.cmd_write_ram = next_hex(&lp1);
+              // Parse into members (also needed by epaper ep_mode 2) and into SPI config
+              saw_1 = next_hex(&lp1);
+              saw_2 = next_hex(&lp1);
+              saw_3 = next_hex(&lp1);
+              // optional, epaper ep_mode 2 only: fill byte for the saw_1 plane, xor for saw_2 data
+              ep_fill1 = next_hex(&lp1);
+              ep_xor2 = next_hex(&lp1);
+              panel_config->spi.cmd_set_addr_x = saw_1;
+              panel_config->spi.cmd_set_addr_y = saw_2;
+              panel_config->spi.cmd_write_ram = saw_3;
             } else {
               saw_1 = next_hex(&lp1);
               saw_2 = next_hex(&lp1);
@@ -1283,7 +1291,15 @@ if (interface == _UDSP_SPI) {
         panel_config->epd.invert_colors = true; // IF_INVERT_COLOR was hardcoded to 1
         panel_config->epd.invert_framebuffer = true; // TODO: maybe use lvgl_param.invert_bw for per-display config?
         panel_config->epd.busy_invert = (bool)lvgl_param.busy_invert;
-        
+        // panel_config is a calloc'ed union: EPDPanelConfig default member initializers do not apply,
+        // and :a values were parsed into the aliased SPI config, so set them explicitly
+        panel_config->epd.busy_timeout = 3000;  // UDSP_BUSY_TIMEOUT
+        panel_config->epd.saw_1 = saw_1;
+        panel_config->epd.saw_2 = saw_2;
+        panel_config->epd.saw_3 = saw_3;
+        panel_config->epd.saw_1_fill = ep_fill1;
+        panel_config->epd.saw_2_xor = ep_xor2;
+
         // Set callback for sending command sequences
         panel_config->epd.send_cmds_callback = [this](uint16_t offset, uint16_t count) {
             this->send_spi_cmds(offset, count);
@@ -1295,12 +1311,17 @@ if (interface == _UDSP_SPI) {
         
         // After descriptor init commands, do initial EPD setup
         EPDPanel* epd = static_cast<EPDPanel*>(universal_panel);
-        epd->resetDisplay();
-        if (epd->cfg.lut_full && epd->cfg.lut_full_len > 0) {
-            epd->setLut(epd->cfg.lut_full, epd->cfg.lut_full_len);
+        if (ep_mode != 2) {
+            // SSD16xx style setup. Skipped for ep_mode 2 (UC81xx/IL0398/IL91874), as before the refactor:
+            // a reset here wipes the registers just written by the descriptor,
+            // and 0x20/0x22/0x24 are LUT commands on these controllers
+            epd->resetDisplay();
+            if (epd->cfg.lut_full && epd->cfg.lut_full_len > 0) {
+                epd->setLut(epd->cfg.lut_full, epd->cfg.lut_full_len);
+            }
+            epd->clearFrameMemory(0xFF);
+            epd->displayFrame();
         }
-        epd->clearFrameMemory(0xFF);
-        epd->displayFrame();
         
         // Send full update command sequence if available
         if (epd->cfg.epc_full_cnt) {

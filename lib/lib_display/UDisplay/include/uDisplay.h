@@ -204,6 +204,8 @@ private:
     uint8_t saw_1;
     uint8_t saw_2;
     uint8_t saw_3;
+    uint8_t ep_fill1;   // ep_mode 2: byte written to the saw_1 plane (default 0xFF)
+    uint8_t ep_xor2;    // ep_mode 2: xor applied to framebuffer data sent to the saw_2 plane (default 0xFF)
     uint8_t cur_rot;
     uint8_t col_mode;
     uint8_t inv_on;

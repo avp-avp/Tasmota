@@ -38,6 +38,8 @@ struct EPDPanelConfig {
     uint8_t saw_1 = 0;  // First command for frame update
     uint8_t saw_2 = 0;  // Second command for frame update
     uint8_t saw_3 = 0;  // Third command for frame update
+    uint8_t saw_1_fill = 0xFF;  // Byte written to the saw_1 plane
+    uint8_t saw_2_xor = 0xFF;   // Xor applied to framebuffer data sent to the saw_2 plane
     
     // LUT data (for ep_mode 1 - 2-LUT mode)
     const uint8_t* lut_full = nullptr;
